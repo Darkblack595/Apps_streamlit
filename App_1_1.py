@@ -49,9 +49,6 @@ def leer_csv_resumen(url):
     
     st.subheader("Tipos de Datos")
     st.dataframe(df.dtypes.astype(str), width=700)
-    
-    st.subheader("Valores Nulos por Columna")
-    st.dataframe(df.isnull().sum().reset_index().rename(columns={'index': 'Columna', 0: 'Valores Nulos'}))
 
     return df
 
