@@ -99,4 +99,4 @@ url = "https://raw.githubusercontent.com/gabrielawad/programacion-para-ingenieri
 df = leer_csv_resumen(url)
 
 # Funcionalidad de Analisis de correlacion
-analisis_correlacion(df)
+mostrar_correlacion(df)
