@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import geopandas as gpd
 from shapely.geometry import Point
+import matplotlib.patches as mpatches
 
 def leer_csv_resumen(url):
     """
@@ -124,7 +125,15 @@ def mostrar_mapa(df):
     st.subheader("Mapa de Ubicación de Clientes")
     fig, ax = plt.subplots(figsize=(10, 6))
     south_america.plot(ax=ax, color='lightgrey', edgecolor='black')
-    gdf.plot(ax=ax, markersize=10, color='red', alpha=0.5)
+    
+    colores = {('Masculino', 'Baja'): 'blue', ('Masculino', 'Media'): 'green', ('Masculino', 'Alta'): 'red',
+               ('Femenino', 'Baja'): 'purple', ('Femenino', 'Media'): 'orange', ('Femenino', 'Alta'): 'pink'}
+    
+    for (genero, frecuencia), subdf in gdf.groupby(['Género', 'Frecuencia_Compra']):
+        subdf.plot(ax=ax, markersize=10, color=colores.get((genero, frecuencia), 'black'), label=f"{genero} - {frecuencia}", alpha=0.6)
+    
+    legend_patches = [mpatches.Patch(color=color, label=label) for label, color in colores.items()]
+    ax.legend(handles=legend_patches, title="Leyenda")
     ax.set_xlabel("Longitud")
     ax.set_ylabel("Latitud")
     ax.set_title("Distribución Geográfica de Clientes en Sudamérica")
