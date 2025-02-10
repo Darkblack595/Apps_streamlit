@@ -116,8 +116,7 @@ def mostrar_mapa(df):
     if frecuencia_seleccionada != "Deshabilitar":
         datos_filtrados = datos_filtrados[datos_filtrados['Frecuencia_Compra'] == frecuencia_seleccionada]
     
-    world = gpd.read_file("https://naturalearth.s3.amazonaws.com/50m_cultural\
-/ne_50m_admin_0_countries.zip")
+    world = gpd.read_file("https://naturalearth.s3.amazonaws.com/50m_cultural/ne_50m_admin_0_countries.zip")
     gdf = gpd.GeoDataFrame(datos_filtrados, geometry=gpd.points_from_xy(datos_filtrados.Longitud, datos_filtrados.Latitud))
     
     st.subheader("Mapa de Ubicación de Clientes")
