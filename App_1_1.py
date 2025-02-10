@@ -98,7 +98,7 @@ def mostrar_correlacion(df):
 
 def mostrar_mapa(df):
     """
-    Muestra mapas de ubicación de clientes en Streamlit con un mapa base usando GeoPandas.
+    Muestra mapas de ubicación de clientes en Streamlit con un mapa base usando GeoPandas, centrado en Sudamérica.
     
     Args:
         df (pd.DataFrame): DataFrame con los datos de clientes.
@@ -118,15 +118,18 @@ def mostrar_mapa(df):
         datos_filtrados = datos_filtrados[datos_filtrados['Frecuencia_Compra'] == frecuencia_seleccionada]
     
     world = gpd.read_file("https://naturalearth.s3.amazonaws.com/50m_cultural/ne_50m_admin_0_countries.zip")
+    south_america = world[world['CONTINENT'] == 'South America']
     gdf = gpd.GeoDataFrame(datos_filtrados, geometry=gpd.points_from_xy(datos_filtrados.Longitud, datos_filtrados.Latitud), crs="EPSG:4326")
     
     st.subheader("Mapa de Ubicación de Clientes")
     fig, ax = plt.subplots(figsize=(10, 6))
-    world.plot(ax=ax, color='lightgrey', edgecolor='black')
+    south_america.plot(ax=ax, color='lightgrey', edgecolor='black')
     gdf.plot(ax=ax, markersize=10, color='red', alpha=0.5)
     ax.set_xlabel("Longitud")
     ax.set_ylabel("Latitud")
-    ax.set_title("Distribución Geográfica de Clientes")
+    ax.set_title("Distribución Geográfica de Clientes en Sudamérica")
+    ax.set_xlim([-85, -30])
+    ax.set_ylim([-60, 15])
     st.pyplot(fig)
 
 
