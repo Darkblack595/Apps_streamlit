@@ -98,30 +98,39 @@ def mostrar_correlacion(df):
 def mostrar_mapa(df):
     """
     Muestra mapas de ubicación de clientes en Streamlit.
-    
+
     Args:
         df (pd.DataFrame): DataFrame con los datos de clientes.
     """
     st.title("Mapa de Ubicación de Clientes")
+
+    # Definir opciones de filtrado
     opciones_genero = ["Deshabilitar"] + list(df['Género'].dropna().unique())
     opciones_frecuencia = ["Deshabilitar"] + list(df['Frecuencia_Compra'].dropna().unique())
-    
-    genero_seleccionado = st.selectbox("Seleccione un género:", opciones_genero)
-    frecuencia_seleccionada = st.selectbox("Seleccione una frecuencia de compra:", opciones_frecuencia)
-    
+
+    # Asignar claves únicas a los selectbox para evitar duplicación
+    genero_seleccionado = st.selectbox("Seleccione un género:", opciones_genero, key="genero_mapa")
+    frecuencia_seleccionada = st.selectbox("Seleccione una frecuencia de compra:", opciones_frecuencia, key="frecuencia_mapa")
+
+    # Filtrado de datos
     datos_filtrados = df.copy()
     if genero_seleccionado != "Deshabilitar":
         datos_filtrados = datos_filtrados[datos_filtrados['Género'] == genero_seleccionado]
     if frecuencia_seleccionada != "Deshabilitar":
         datos_filtrados = datos_filtrados[datos_filtrados['Frecuencia_Compra'] == frecuencia_seleccionada]
-    
-    st.subheader("Mapa de Ubicación de Clientes")
-    fig, ax = plt.subplots(figsize=(10, 6))
-    ax.scatter(datos_filtrados['Longitud'], datos_filtrados['Latitud'], alpha=0.5, c='red')
-    ax.set_xlabel("Longitud")
-    ax.set_ylabel("Latitud")
-    ax.set_title("Distribución Geográfica de Clientes")
-    st.pyplot(fig)
+
+    # Mostrar el mapa solo si hay datos después del filtrado
+    if datos_filtrados.empty:
+        st.warning("No hay datos disponibles con los filtros seleccionados.")
+    else:
+        st.subheader("Mapa de Ubicación de Clientes")
+        fig, ax = plt.subplots(figsize=(10, 6))
+        ax.scatter(datos_filtrados['Longitud'], datos_filtrados['Latitud'], alpha=0.5, c='red')
+        ax.set_xlabel("Longitud")
+        ax.set_ylabel("Latitud")
+        ax.set_title("Distribución Geográfica de Clientes")
+        st.pyplot(fig)
+
 
 
 # URL del CSV
