@@ -43,15 +43,15 @@ def leer_csv_resumen(url):
     # 7. Latitud y Longitud: Interpolación lineal solo en valores nulos
     df[['Latitud', 'Longitud']] = df[['Latitud', 'Longitud']].interpolate(method='linear', limit_direction='both')
 
-    # Mostrar resumen del DataFrame
-    """print("Resumen del CSV:")
-    print("-----------------------------------")
-    print(f"Tamaño del dataset: {df.shape[0]} filas, {df.shape[1]} columnas")
-    print(f"Columnas: {list(df.columns)}")
-    print("Tipos de datos:")
-    print(df.dtypes)
-    print("Valores nulos por columna:")
-    print(df.isnull().sum())"""
+    st.subheader("Resumen del Dataset")
+    st.write(f"Tamaño del dataset: {df.shape[0]} filas, {df.shape[1]} columnas")
+    st.write("Columnas:", list(df.columns))
+    
+    st.subheader("Tipos de Datos")
+    st.dataframe(df.dtypes.astype(str), width=700)
+    
+    st.subheader("Valores Nulos por Columna")
+    st.dataframe(df.isnull().sum().reset_index().rename(columns={'index': 'Columna', 0: 'Valores Nulos'}))
 
     return df
 
