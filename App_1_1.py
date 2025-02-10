@@ -64,31 +64,38 @@ def mostrar_correlacion(df):
         df (pd.DataFrame): DataFrame con los datos de clientes.
     """
     st.title("Análisis de Correlación")
-    opciones = ["Global", "Por Género", "Por Frecuencia de Compra"]
-    seleccion = st.selectbox("Seleccione el tipo de análisis:", opciones)
+    opciones_genero = ["Deshabilitar"] + list(df['Género'].dropna().unique())
+    opciones_frecuencia = ["Deshabilitar"] + list(df['Frecuencia_Compra'].dropna().unique())
     
-    if seleccion == "Global":
-        fig, ax = plt.subplots()
-        sns.scatterplot(data=df, x='Edad', y='Ingreso_Anual_USD', ax=ax)
-        sns.regplot(data=df, x='Edad', y='Ingreso_Anual_USD', scatter=False, ax=ax, color='red')
-        ax.set_title("Correlación Global entre Edad e Ingreso Anual")
-        st.pyplot(fig)
-    elif seleccion == "Por Género":
-        genero = st.selectbox("Seleccione un género:", df['Género'].dropna().unique())
-        datos_genero = df[df['Género'] == genero]
-        fig, ax = plt.subplots()
-        sns.scatterplot(data=datos_genero, x='Edad', y='Ingreso_Anual_USD', ax=ax)
-        sns.regplot(data=datos_genero, x='Edad', y='Ingreso_Anual_USD', scatter=False, ax=ax, color='red')
-        ax.set_title(f"Correlación para Género: {genero}")
-        st.pyplot(fig)
-    elif seleccion == "Por Frecuencia de Compra":
-        frecuencia = st.selectbox("Seleccione una frecuencia de compra:", df['Frecuencia_Compra'].dropna().unique())
-        datos_frecuencia = df[df['Frecuencia_Compra'] == frecuencia]
-        fig, ax = plt.subplots()
-        sns.scatterplot(data=datos_frecuencia, x='Edad', y='Ingreso_Anual_USD', ax=ax)
-        sns.regplot(data=datos_frecuencia, x='Edad', y='Ingreso_Anual_USD', scatter=False, ax=ax, color='red')
-        ax.set_title(f"Correlación para Frecuencia de Compra: {frecuencia}")
-        st.pyplot(fig)
+    genero_seleccionado = st.selectbox("Seleccione un género:", opciones_genero)
+    frecuencia_seleccionada = st.selectbox("Seleccione una frecuencia de compra:", opciones_frecuencia)
+    
+    datos_filtrados = df.copy()
+    if genero_seleccionado != "Deshabilitar":
+        datos_filtrados = datos_filtrados[datos_filtrados['Género'] == genero_seleccionado]
+    if frecuencia_seleccionada != "Deshabilitar":
+        datos_filtrados = datos_filtrados[datos_filtrados['Frecuencia_Compra'] == frecuencia_seleccionada]
+    
+    fig, ax = plt.subplots()
+    sns.scatterplot(data=datos_filtrados, x='Edad', y='Ingreso_Anual_USD', ax=ax)
+    sns.regplot(data=datos_filtrados, x='Edad', y='Ingreso_Anual_USD', scatter=False, ax=ax, color='red')
+    titulo = "Correlación Global entre Edad e Ingreso Anual"
+    if genero_seleccionado != "Deshabilitar":
+        titulo += f" - Género: {genero_seleccionado}"
+    if frecuencia_seleccionada != "Deshabilitar":
+        titulo += f" - Frecuencia: {frecuencia_seleccionada}"
+    ax.set_title(titulo)
+    st.pyplot(fig)
+    
+    st.subheader("Análisis de la Correlación")
+    correlacion = datos_filtrados[['Edad', 'Ingreso_Anual_USD']].corr().iloc[0, 1]
+    st.write(f"El coeficiente de correlación entre la Edad y el Ingreso Anual es de {correlacion:.2f}.")
+    if correlacion > 0.5:
+        st.write("Existe una fuerte correlación positiva, lo que indica que a mayor edad, mayor ingreso anual en esta muestra.")
+    elif correlacion < -0.5:
+        st.write("Existe una fuerte correlación negativa, indicando que a mayor edad, menor ingreso anual en esta muestra.")
+    else:
+        st.write("La correlación entre la Edad y el Ingreso Anual no es significativa en esta muestra de datos.")
 
 
 
