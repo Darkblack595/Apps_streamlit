@@ -104,11 +104,12 @@ def mostrar_mapa(df):
         df (pd.DataFrame): DataFrame con los datos de clientes.
     """
     st.title("Mapa de Ubicación de Clientes")
-    opciones_genero = ["Deshabilitar"] + list(df['Género'].dropna().unique())
-    opciones_frecuencia = ["Deshabilitar"] + list(df['Frecuencia_Compra'].dropna().unique())
     
-    genero_seleccionado = st.selectbox("Seleccione un género:", opciones_genero)
-    frecuencia_seleccionada = st.selectbox("Seleccione una frecuencia de compra:", opciones_frecuencia)
+    col1, col2 = st.columns(2)
+    with col1:
+        genero_seleccionado = st.selectbox("Seleccione un género:", ["Deshabilitar"] + list(df['Género'].dropna().unique()), key="genero")
+    with col2:
+        frecuencia_seleccionada = st.selectbox("Seleccione una frecuencia de compra:", ["Deshabilitar"] + list(df['Frecuencia_Compra'].dropna().unique()), key="frecuencia")
     
     datos_filtrados = df.copy()
     if genero_seleccionado != "Deshabilitar":
@@ -117,11 +118,11 @@ def mostrar_mapa(df):
         datos_filtrados = datos_filtrados[datos_filtrados['Frecuencia_Compra'] == frecuencia_seleccionada]
     
     world = gpd.read_file("https://naturalearth.s3.amazonaws.com/50m_cultural/ne_50m_admin_0_countries.zip")
-    gdf = gpd.GeoDataFrame(datos_filtrados, geometry=gpd.points_from_xy(datos_filtrados.Longitud, datos_filtrados.Latitud))
+    gdf = gpd.GeoDataFrame(datos_filtrados, geometry=gpd.points_from_xy(datos_filtrados.Longitud, datos_filtrados.Latitud), crs="EPSG:4326")
     
     st.subheader("Mapa de Ubicación de Clientes")
     fig, ax = plt.subplots(figsize=(10, 6))
-    world.plot(ax=ax, color='lightgrey')
+    world.plot(ax=ax, color='lightgrey', edgecolor='black')
     gdf.plot(ax=ax, markersize=10, color='red', alpha=0.5)
     ax.set_xlabel("Longitud")
     ax.set_ylabel("Latitud")
