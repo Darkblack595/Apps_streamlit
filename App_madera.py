@@ -82,8 +82,16 @@ def main():
     
     df = cargar_datos(url)
     datos = calcular_maderas_comunes(df)
-    mostrar_visualizaciones(datos)
-    mostrar_top_10_maderas(df)
+    
+    opcion = st.sidebar.selectbox("Selecciona una funcionalidad", [
+        "Especies más comunes",
+        "Top 10 especies con mayor volumen"
+    ])
+    
+    if opcion == "Especies más comunes":
+        mostrar_visualizaciones(datos)
+    elif opcion == "Top 10 especies con mayor volumen":
+        mostrar_top_10_maderas(df)
 
 
 if __name__ == "__main__":
