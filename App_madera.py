@@ -73,19 +73,19 @@ def mostrar_visualizaciones(datos):
     st.plotly_chart(fig_departamento)
 
 
+import geopandas as gpd
+import matplotlib.pyplot as plt
+import pandas as pd
+import streamlit as st
+
 def generar_mapa_calor(df):
     """
     Genera un mapa de Sudamérica utilizando GeoPandas y Matplotlib,
-    resaltando a Colombia con base en el volumen total de madera,
-    utilizando un archivo ZIP con los límites de los países.
+    resaltando los volúmenes de madera para cada país en Sudamérica.
     
     Args:
         df (pd.DataFrame): DataFrame con los datos de madera.
     """
-    # Se asume que el CSV contiene información de departamentos de Colombia.
-    # Se agrupa y se obtiene el total de madera para Colombia.
-    volumen_total = df['VOLUMEN M3'].sum()
-    
     # Cargar el conjunto de datos de países desde el archivo ZIP en la URL proporcionada
     url = "https://naturalearth.s3.amazonaws.com/50m_cultural/ne_50m_admin_0_countries.zip"
     
@@ -95,26 +95,29 @@ def generar_mapa_calor(df):
     # Filtrar solo los países de Sudamérica
     south_america = world[world['CONTINENT'] == "South America"].copy()
     
-    # Crear una nueva columna para almacenar el volumen de madera (inicialmente en 0)
-    south_america["wood_volume"] = 0.0
+    # Agrupar los volúmenes de madera por país
+    volumen_por_pais = df.groupby('MUNICIPIO')['VOLUMEN M3'].sum().reset_index()
     
-    # Asumimos que todos los datos corresponden a Colombia.
-    # Resaltamos a Colombia asignándole el volumen total de madera.
-    south_america.loc[south_america['NAME'] == "Colombia", "wood_volume"] = volumen_total
+    # Asumimos que los municipios corresponden a los países en el GeoDataset.
+    # Mapeamos el volumen de madera a la columna correspondiente de Sudamérica.
+    south_america["wood_volume"] = south_america['NAME'].map(
+        lambda x: volumen_por_pais[volumen_por_pais['MUNICIPIO'] == x]['VOLUMEN M3'].sum() if x in volumen_por_pais['MUNICIPIO'].values else 0)
     
-    # Plotear el mapa
+    # Plotear el mapa de Sudamérica
     fig, ax = plt.subplots(1, 1, figsize=(12, 10))
-    # Se pinta el mapa usando la columna "wood_volume". Los países sin datos se muestran en gris claro.
     south_america.plot(column="wood_volume", 
                        ax=ax, 
                        legend=True,
                        cmap="Blues", 
                        missing_kwds={"color": "lightgrey", "edgecolor": "red", "hatch": "///", "label": "Sin datos"})
     
-    ax.set_title("Mapa de madera en Sudamérica (Colombia resaltada)", fontsize=15)
+    # Ajustar el título y la visualización
+    ax.set_title("Mapa de Madera en Sudamérica (Volúmenes de madera por país)", fontsize=15)
     ax.set_axis_off()
     
+    # Mostrar el gráfico en Streamlit
     st.pyplot(fig)
+
 
 
 
