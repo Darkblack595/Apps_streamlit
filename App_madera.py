@@ -70,44 +70,49 @@ def mostrar_visualizaciones(datos):
     fig_departamento = px.bar(df_filtrado, x='ESPECIE', y='VOLUMEN M3', title=f'Volumen por especie en {departamento_seleccionado}')
     st.plotly_chart(fig_departamento)
 
-
 import geopandas as gpd
-import pandas as pd
 import matplotlib.pyplot as plt
+import pandas as pd
+import streamlit as st
 
 def generar_mapa_calor(df):
     """
-    Genera un mapa de calor que muestra la distribución de volúmenes de madera por departamento
-    utilizando GeoPandas y Matplotlib.
+    Genera un mapa de Sudamérica utilizando GeoPandas y Matplotlib, 
+    resaltando a Colombia con base en el volumen total de madera.
     
     Args:
         df (pd.DataFrame): DataFrame con los datos de madera.
     """
-    # Agrupar los datos por departamento
-    df_departamento = df.groupby('DPTO')['VOLUMEN M3'].sum().reset_index()
+    # Se asume que el CSV contiene información de departamentos de Colombia.
+    # Se agrupa y se obtiene el total de madera para Colombia.
+    volumen_total = df['VOLUMEN M3'].sum()
     
-    # Limpiar los nombres de los departamentos para que coincidan con los del GeoJSON
-    df_departamento['DPTO'] = df_departamento['DPTO'].str.strip().str.title()
-
-    # Cargar el archivo GeoJSON de Colombia con los departamentos
-    gdf_colombia = gpd.read_file("colombia.geojson")  # Cambia esto por la ruta de tu archivo GeoJSON
+    # Cargar el conjunto de datos de países (Natural Earth)
+    world = gpd.read_file(gpd.datasets.get_path("naturalearth_lowres"))
     
-    # Unir el DataFrame de volúmenes con el GeoDataFrame de los departamentos
-    gdf_departamento = gdf_colombia.set_index('NOMBRE_DPT').join(df_departamento.set_index('DPTO'))
-
-    # Plotear el mapa de calor con Matplotlib
+    # Filtrar solo los países de Sudamérica
+    south_america = world[world['continent'] == "South America"].copy()
+    
+    # Crear una nueva columna para almacenar el volumen de madera (inicialmente en 0)
+    south_america["wood_volume"] = 0.0
+    
+    # Asumimos que todos los datos corresponden a Colombia.
+    # Resaltamos a Colombia asignándole el volumen total de madera.
+    south_america.loc[south_america['name'] == "Colombia", "wood_volume"] = volumen_total
+    
+    # Plotear el mapa
     fig, ax = plt.subplots(1, 1, figsize=(12, 10))
-    gdf_departamento.plot(column='VOLUMEN M3', ax=ax, legend=True,
-                          legend_kwds={'label': "Volúmenes de Madera por Departamento",
-                                       'orientation': "horizontal"},
-                          cmap='Blues')
-
-    # Agregar título y personalizar el gráfico
-    ax.set_title("Mapa de calor de volúmenes de madera por departamento", fontsize=15)
-    ax.set_axis_off()  # Eliminar los ejes para un mejor enfoque visual
-
-    st.pyplot(fig)  # Mostrar el gráfico en Streamlit
-
+    # Se pinta el mapa usando la columna "wood_volume". Los países sin datos se muestran en gris claro.
+    south_america.plot(column="wood_volume", 
+                       ax=ax, 
+                       legend=True,
+                       cmap="Blues", 
+                       missing_kwds={"color": "lightgrey", "edgecolor": "red", "hatch": "///", "label": "Sin datos"})
+    
+    ax.set_title("Mapa de madera en Sudamérica (Colombia resaltada)", fontsize=15)
+    ax.set_axis_off()
+    
+    st.pyplot(fig)
 
 
 def main():
