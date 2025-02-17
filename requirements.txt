@@ -6,4 +6,3 @@ scipy
 seaborn
 geopandas
 plotly
-json
