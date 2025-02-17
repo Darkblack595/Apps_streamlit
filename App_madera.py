@@ -16,6 +16,31 @@ def cargar_datos(url):
     """
     return pd.read_csv(url)
 
+def calcular_maderas_comunes(df):
+    """
+    Calcula las especies de madera más comunes basadas en la frecuencia de aparición en el dataset
+    a nivel país y por departamento.
+    
+    Args:
+        df (pd.DataFrame): DataFrame con los datos de madera.
+    
+    Returns:
+        dict: Diccionario con los datos agregados a nivel país y por departamento.
+    """
+    # Contar la frecuencia de aparición de cada especie a nivel país
+    df_agrupado_pais = df['ESPECIE'].value_counts().reset_index()
+    df_agrupado_pais.columns = ['ESPECIE', 'FRECUENCIA']
+    df_agrupado_pais = df_agrupado_pais.sort_values(by='FRECUENCIA', ascending=False)
+    
+    # Contar la frecuencia de aparición de cada especie por departamento
+    df_agrupado_departamento = df.groupby(['DPTO', 'ESPECIE']).size().reset_index(name='FRECUENCIA')
+    df_agrupado_departamento = df_agrupado_departamento.sort_values(by=['DPTO', 'FRECUENCIA'], ascending=[True, False])
+    
+    return {
+        'pais': df_agrupado_pais,
+        'departamento': df_agrupado_departamento
+    }
+
 def mostrar_top_10_maderas(df):
     """
     Muestra un gráfico de barras con las diez especies de madera más comunes y sus volúmenes asociados.
@@ -37,21 +62,6 @@ def mostrar_top_10_maderas(df):
     
     st.subheader("Top 10 especies de madera más comunes y sus volúmenes asociados")
     fig_top_10 = px.bar(df_top_10, x='ESPECIE', y='VOLUMEN M3', title='Top 10 especies más comunes y sus volúmenes')
-    st.plotly_chart(fig_top_10)
-    
-
-def mostrar_top_10_maderas(df):
-    """
-    Muestra un gráfico de barras con las diez especies de madera con mayor volumen movilizado.
-    
-    Args:
-        df (pd.DataFrame): DataFrame con los datos de madera.
-    """
-    df_top_10 = df.groupby('ESPECIE')['VOLUMEN M3'].sum().reset_index()
-    df_top_10 = df_top_10.sort_values(by='VOLUMEN M3', ascending=False).head(10)
-    
-    st.subheader("Top 10 especies de madera con mayor volumen movilizado")
-    fig_top_10 = px.bar(df_top_10, x='ESPECIE', y='VOLUMEN M3', title='Top 10 especies con mayor volumen movilizado')
     st.plotly_chart(fig_top_10)
 
 def mostrar_visualizaciones(datos):
