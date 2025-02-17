@@ -257,6 +257,28 @@ def identificar_outliers(df):
     fig = px.box(df, y='VOLUMEN M3', title='Distribución de volúmenes de madera con outliers')
     st.plotly_chart(fig)
 
+def agrupar_por_municipio(df):
+    """
+    Agrupa los datos por municipio y calcula el volumen total de madera movilizada en cada uno.
+    
+    Args:
+        df (pd.DataFrame): DataFrame con los datos de madera.
+    """
+    st.subheader("Volumen total de madera movilizada por municipio")
+    
+    # Agrupar por municipio y calcular el volumen total
+    df_agrupado = df.groupby('MUNICIPIO')['VOLUMEN M3'].sum().reset_index()
+    df_agrupado = df_agrupado.sort_values(by='VOLUMEN M3', ascending=False)  # Ordenar de mayor a menor
+    
+    # Mostrar la tabla con los resultados
+    st.write("### Volumen total de madera por municipio:")
+    st.dataframe(df_agrupado)
+    
+    # Mostrar un gráfico de barras para visualizar los resultados
+    st.write("### Gráfico de barras: Volumen total por municipio")
+    fig = px.bar(df_agrupado, x='MUNICIPIO', y='VOLUMEN M3', title='Volumen total de madera por municipio')
+    st.plotly_chart(fig)
+
 def main():
     """
     Función principal para ejecutar la aplicación en Streamlit.
@@ -273,7 +295,8 @@ def main():
         "Mapa de calor por departamento",
         "Top 10 municipios con mayor movilización",
         "Evolución temporal por especie y tipo de producto",
-        "Identificar outliers en los volúmenes de madera"
+        "Identificar outliers en los volúmenes de madera",
+        "Volumen total de madera por municipio"
     ])
     
     if opcion == "Especies más comunes":
@@ -288,6 +311,8 @@ def main():
         analizar_evolucion_temporal(df)
     elif opcion == "Identificar outliers en los volúmenes de madera":
         identificar_outliers(df)
+    elif opcion == "Volumen total de madera por municipio":
+        agrupar_por_municipio(df)
 
 if __name__ == "__main__":
     main()
