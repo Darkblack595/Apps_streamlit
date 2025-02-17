@@ -197,7 +197,9 @@ def main():
     elif opcion == "Mapa de calor por departamento":
         generar_mapa_calor(df)
     elif opcion == "Top 10 municipios con mayor movilización":
-        url = pd.read_csv('https://raw.githubusercontent.com/Darkblack595/Apps_streamlit/refs/heads/main/DIVIPOLA_C_digos_municipios_geolocalizados_20250217.csv')
+        url = pd.read_csv('https://raw.githubuser\
+        content.com/Darkblack595/Apps_streamlit/refs/heads/main/DIVIPOLA\
+        -_C_digos_municipios_geolocalizados_20250217.csv')
         df_coordenadas = cargar_coordenadas_municipios(url)
         generar_mapa_top_10_municipios(df, df_coordenadas)
     
