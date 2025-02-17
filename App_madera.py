@@ -100,7 +100,7 @@ def generar_mapa_calor(df):
     
     # Asumimos que todos los datos corresponden a Colombia.
     # Resaltamos a Colombia asignándole el volumen total de madera.
-    south_america.loc[south_america['name'] == "Colombia", "wood_volume"] = volumen_total
+    south_america.loc[south_america['NAME'] == "Colombia", "wood_volume"] = volumen_total
     
     # Plotear el mapa
     fig, ax = plt.subplots(1, 1, figsize=(12, 10))
@@ -140,6 +140,7 @@ def main():
         mostrar_top_10_maderas(df)
     elif opcion == "Mapa de calor por departamento":
         generar_mapa_calor(df)
+    
 
 if __name__ == "__main__":
     main()
