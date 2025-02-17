@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 import geopandas as gpd
+import requests
 
 def cargar_datos(url):
     """
@@ -79,19 +80,27 @@ def generar_mapa_calor(df):
     # Agrupar los volúmenes de madera por departamento
     volumen_por_departamento = df.groupby('DPTO')['VOLUMEN M3'].sum().reset_index()
     
-    # Cargar el GeoDataFrame de Colombia
-    colombia_geo = gpd.read_file('https://raw.githubusercontent.com/Darkblack595/Apps_streamlit/main/colombia.geojson')
+    # Cargar el GeoJSON desde la URL
+    url_geojson = "https://gist.githubusercontent.com/john-guerra/43c7656821069d00dcbc/raw/3aadedf47badbdac823b00dbe259f6bc6d9e1899/colombia.geo.json"
+    response = requests.get(url_geojson)
+    colombia_geo = response.json()
     
-    # Unir los datos de volumen con el GeoDataFrame
-    colombia_geo = colombia_geo.merge(volumen_por_departamento, left_on='NOMBRE_DPT', right_on='DPTO', how='left')
+    # Crear un DataFrame con los nombres de los departamentos del GeoJSON
+    departamentos_geojson = [feature['properties']['NOMBRE_DPT'] for feature in colombia_geo['features']]
+    df_geojson = pd.DataFrame({'DPTO': departamentos_geojson})
+    
+    # Unir los datos de volumen con los nombres de los departamentos del GeoJSON
+    df_merged = df_geojson.merge(volumen_por_departamento, on='DPTO', how='left')
+    df_merged['VOLUMEN M3'] = df_merged['VOLUMEN M3'].fillna(0)  # Rellenar con 0 si no hay datos
     
     # Crear el mapa coroplético
-    fig = px.choropleth(colombia_geo, 
-                        geojson=colombia_geo.geometry, 
-                        locations=colombia_geo.index, 
+    fig = px.choropleth(df_merged, 
+                        geojson=colombia_geo, 
+                        locations='DPTO', 
+                        featureidkey="properties.NOMBRE_DPT",
                         color='VOLUMEN M3',
-                        hover_name='NOMBRE_DPT',
-                        projection="mercator",
+                        hover_name='DPTO',
+                        color_continuous_scale="Blues",
                         title='Distribución de Volúmenes de Madera por Departamento en Colombia')
     
     # Ajustar el layout del mapa
