@@ -71,7 +71,7 @@ def mostrar_visualizaciones(datos):
     fig_departamento = px.bar(df_filtrado, x='ESPECIE', y='VOLUMEN M3', title=f'Volumen por especie en {departamento_seleccionado}')
     st.plotly_chart(fig_departamento)
 
-def mapa_calor(df):
+def generar_mapa_calor(df):
     """Genera un mapa de calor de volúmenes de madera por departamento."""
     colombia = gpd.read_file('https://raw.githubusercontent.com/Ritz38/Analisis_maderas/refs/heads/main/Colombia.geo.json')
     fig, ax = plt.subplots()
