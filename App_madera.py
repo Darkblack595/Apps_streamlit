@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
+import geopandas as gpd
 import requests
 
 def cargar_datos(url):
@@ -17,7 +18,8 @@ def cargar_datos(url):
 
 def calcular_maderas_comunes(df):
     """
-    Calcula las especies de madera más comunes y sus volúmenes totales a nivel país y por departamento.
+    Calcula las especies de madera más comunes basadas en la frecuencia de aparición en el dataset
+    a nivel país y por departamento.
     
     Args:
         df (pd.DataFrame): DataFrame con los datos de madera.
@@ -25,11 +27,14 @@ def calcular_maderas_comunes(df):
     Returns:
         dict: Diccionario con los datos agregados a nivel país y por departamento.
     """
-    df_agrupado_pais = df.groupby('ESPECIE')['VOLUMEN M3'].sum().reset_index()
-    df_agrupado_pais = df_agrupado_pais.sort_values(by='VOLUMEN M3', ascending=False)
+    # Contar la frecuencia de aparición de cada especie a nivel país
+    df_agrupado_pais = df['ESPECIE'].value_counts().reset_index()
+    df_agrupado_pais.columns = ['ESPECIE', 'FRECUENCIA']
+    df_agrupado_pais = df_agrupado_pais.sort_values(by='FRECUENCIA', ascending=False)
     
-    df_agrupado_departamento = df.groupby(['DPTO', 'ESPECIE'])['VOLUMEN M3'].sum().reset_index()
-    df_agrupado_departamento = df_agrupado_departamento.sort_values(by=['DPTO', 'VOLUMEN M3'], ascending=[True, False])
+    # Contar la frecuencia de aparición de cada especie por departamento
+    df_agrupado_departamento = df.groupby(['DPTO', 'ESPECIE']).size().reset_index(name='FRECUENCIA')
+    df_agrupado_departamento = df_agrupado_departamento.sort_values(by=['DPTO', 'FRECUENCIA'], ascending=[True, False])
     
     return {
         'pais': df_agrupado_pais,
@@ -58,7 +63,7 @@ def mostrar_visualizaciones(datos):
         datos (dict): Diccionario con los DataFrames de maderas más comunes a nivel país y por departamento.
     """
     st.subheader("Especies de madera más comunes a nivel país")
-    fig_pais = px.bar(datos['pais'], x='ESPECIE', y='VOLUMEN M3', title='Volumen por especie (País)')
+    fig_pais = px.bar(datos['pais'], x='ESPECIE', y='FRECUENCIA', title='Frecuencia por especie (País)')
     st.plotly_chart(fig_pais)
     
     st.subheader("Especies de madera más comunes por departamento")
@@ -66,7 +71,7 @@ def mostrar_visualizaciones(datos):
     departamento_seleccionado = st.selectbox("Selecciona un departamento", departamentos)
     
     df_filtrado = datos['departamento'][datos['departamento']['DPTO'] == departamento_seleccionado]
-    fig_departamento = px.bar(df_filtrado, x='ESPECIE', y='VOLUMEN M3', title=f'Volumen por especie en {departamento_seleccionado}')
+    fig_departamento = px.bar(df_filtrado, x='ESPECIE', y='FRECUENCIA', title=f'Frecuencia por especie en {departamento_seleccionado}')
     st.plotly_chart(fig_departamento)
 
 def generar_mapa_calor(df):
@@ -99,8 +104,7 @@ def generar_mapa_calor(df):
                         featureidkey="properties.NOMBRE_DPT",
                         color='VOLUMEN M3',
                         hover_name='DPTO',
-                        color_continuous_scale="Viridis",  # Escala de colores
-                        range_color=(0, df_merged['VOLUMEN M3'].max()),  # Rango de colores
+                        color_continuous_scale="Blues",
                         title='Distribución de Volúmenes de Madera por Departamento en Colombia')
     
     # Ajustar el layout del mapa
