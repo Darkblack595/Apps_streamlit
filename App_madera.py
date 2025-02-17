@@ -13,7 +13,9 @@ def cargar_datos(url):
     Returns:
         pd.DataFrame: DataFrame con los datos cargados.
     """
-    return pd.read_csv(url)
+    df = pd.read_csv(url)
+    df['DPTO'] = df['DPTO'].str.upper()
+    return df
 
 def calcular_maderas_comunes(df):
     """
@@ -69,37 +71,20 @@ def mostrar_visualizaciones(datos):
     fig_departamento = px.bar(df_filtrado, x='ESPECIE', y='VOLUMEN M3', title=f'Volumen por especie en {departamento_seleccionado}')
     st.plotly_chart(fig_departamento)
 
-def generar_mapa_calor(df):
-    """
-    Genera un mapa de calor con los volúmenes de madera por departamento en Colombia.
+def mapa_calor(df):
+    """Genera un mapa de calor de volúmenes de madera por departamento."""
+    colombia = gpd.read_file('https://raw.githubusercontent.com/Ritz38/Analisis_maderas/refs/heads/main/Colombia.geo.json')
+    fig, ax = plt.subplots()
     
-    Args:
-        df (pd.DataFrame): DataFrame con los datos de madera.
-    """
-    # Agrupar los volúmenes de madera por departamento
-    volumen_por_departamento = df.groupby('DPTO')['VOLUMEN M3'].sum().reset_index()
+    vol_por_dpto = df.groupby('DPTO')['VOLUMEN M3'].sum().reset_index()
+    df_geo = colombia.merge(vol_por_dpto, left_on='NOMBRE_DPT', right_on='DPTO')
     
-    # Cargar el GeoDataFrame de Colombia
-    colombia_geo = gpd.read_file('https://raw.githubusercontent.com/Darkblack595/Apps_streamlit/main/colombia.geojson')
+    df_geo.plot(column='VOLUMEN M3', cmap='OrRd', linewidth=0.8, edgecolor='k', legend=True, ax=ax)
     
-    # Unir los datos de volumen con el GeoDataFrame
-    colombia_geo = colombia_geo.merge(volumen_por_departamento, left_on='NOMBRE_DPT', right_on='DPTO', how='left')
-    
-    # Crear el mapa coroplético
-    fig = px.choropleth(colombia_geo, 
-                        geojson=colombia_geo.geometry, 
-                        locations=colombia_geo.index, 
-                        color='VOLUMEN M3',
-                        hover_name='NOMBRE_DPT',
-                        projection="mercator",
-                        title='Distribución de Volúmenes de Madera por Departamento en Colombia')
-    
-    # Ajustar el layout del mapa
-    fig.update_geos(fitbounds="locations", visible=False)
-    fig.update_layout(margin={"r":0,"t":40,"l":0,"b":0})
-    
-    # Mostrar el mapa en Streamlit
-    st.plotly_chart(fig)
+    # Establecer el título
+    ax.set_title("Distribución de volúmenes de madera por departamento")
+    ax.set_title("Distribución de volúmenes de madera por departamento")
+    st.pyplot(fig)
 
 def main():
     """
