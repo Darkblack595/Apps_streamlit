@@ -69,11 +69,16 @@ def mostrar_visualizaciones(datos):
     df_filtrado = datos['departamento'][datos['departamento']['DPTO'] == departamento_seleccionado]
     fig_departamento = px.bar(df_filtrado, x='ESPECIE', y='VOLUMEN M3', title=f'Volumen por especie en {departamento_seleccionado}')
     st.plotly_chart(fig_departamento)
-    
+
+
+import geopandas as gpd
+import pandas as pd
+import matplotlib.pyplot as plt
 
 def generar_mapa_calor(df):
     """
-    Genera un mapa de calor que muestra la distribución de volúmenes de madera por departamento.
+    Genera un mapa de calor que muestra la distribución de volúmenes de madera por departamento
+    utilizando GeoPandas y Matplotlib.
     
     Args:
         df (pd.DataFrame): DataFrame con los datos de madera.
@@ -84,21 +89,25 @@ def generar_mapa_calor(df):
     # Limpiar los nombres de los departamentos para que coincidan con los del GeoJSON
     df_departamento['DPTO'] = df_departamento['DPTO'].str.strip().str.title()
 
-    # Cargar el archivo GeoJSON local de Colombia
-    with open("colombia.geojson", "r") as f:
-        geojson = json.load(f)  # Carga el GeoJSON desde un archivo local
+    # Cargar el archivo GeoJSON de Colombia con los departamentos
+    gdf_colombia = gpd.read_file("colombia.geojson")  # Cambia esto por la ruta de tu archivo GeoJSON
+    
+    # Unir el DataFrame de volúmenes con el GeoDataFrame de los departamentos
+    gdf_departamento = gdf_colombia.set_index('NOMBRE_DPT').join(df_departamento.set_index('DPTO'))
 
-    # Crear el mapa de calor
-    st.subheader("Mapa de calor de volúmenes de madera por departamento")
-    fig_mapa = px.choropleth(df_departamento, 
-                             geojson=geojson, 
-                             locations='DPTO', 
-                             featureidkey="properties.NOMBRE_DPT", 
-                             color='VOLUMEN M3', 
-                             title='Distribución de volúmenes por departamento',
-                             color_continuous_scale="Blues")
-    fig_mapa.update_geos(fitbounds="locations", visible=False)
-    st.plotly_chart(fig_mapa)
+    # Plotear el mapa de calor con Matplotlib
+    fig, ax = plt.subplots(1, 1, figsize=(12, 10))
+    gdf_departamento.plot(column='VOLUMEN M3', ax=ax, legend=True,
+                          legend_kwds={'label': "Volúmenes de Madera por Departamento",
+                                       'orientation': "horizontal"},
+                          cmap='Blues')
+
+    # Agregar título y personalizar el gráfico
+    ax.set_title("Mapa de calor de volúmenes de madera por departamento", fontsize=15)
+    ax.set_axis_off()  # Eliminar los ejes para un mejor enfoque visual
+
+    st.pyplot(fig)  # Mostrar el gráfico en Streamlit
+
 
 
 def main():
