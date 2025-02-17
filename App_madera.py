@@ -73,6 +73,21 @@ def mostrar_visualizaciones(datos):
     st.plotly_chart(fig_departamento)
 
 
+def generar_mapa_calor(df):
+    """
+    Genera un mapa de calor que muestra la distribución de volúmenes de madera por departamento.
+    
+    Args:
+        df (pd.DataFrame): DataFrame con los datos de madera.
+    """
+    df_departamento = df.groupby('DPTO')['VOLUMEN M3'].sum().reset_index()
+    
+    st.subheader("Mapa de calor de volúmenes de madera por departamento")
+    fig_mapa = px.choropleth(df_departamento, locations='DPTO', locationmode='ISO-3',
+                             color='VOLUMEN M3', title='Distribución de volúmenes por departamento')
+    st.plotly_chart(fig_mapa)
+
+
 def main():
     """
     Función principal para ejecutar la aplicación en Streamlit.
@@ -85,13 +100,16 @@ def main():
     
     opcion = st.sidebar.selectbox("Selecciona una funcionalidad", [
         "Especies más comunes",
-        "Top 10 especies con mayor volumen"
+        "Top 10 especies con mayor volumen",
+        "Mapa de calor por departamento"
     ])
     
     if opcion == "Especies más comunes":
         mostrar_visualizaciones(datos)
     elif opcion == "Top 10 especies con mayor volumen":
         mostrar_top_10_maderas(df)
+    elif opcion == "Mapa de calor por departamento":
+        generar_mapa_calor(df)
 
 
 if __name__ == "__main__":
