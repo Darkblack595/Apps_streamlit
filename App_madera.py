@@ -1,11 +1,8 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
-import json
-import requests
 import matplotlib.pyplot as plt
 import geopandas as gpd
-import seaborn as sns
 
 def cargar_datos(url):
     """
@@ -76,7 +73,7 @@ def mostrar_visualizaciones(datos):
 
 def generar_mapa_calor(df):
     """
-    Genera un mapa de calor con los volúmenes de madera por departamento en Colombia.
+    Genera un mapa de calor que muestra la distribución de volúmenes de madera por departamento en Colombia.
     
     Args:
         df (pd.DataFrame): DataFrame con los datos de madera.
@@ -84,36 +81,33 @@ def generar_mapa_calor(df):
     # Agrupar los volúmenes de madera por departamento
     volumen_por_departamento = df.groupby('DPTO')['VOLUMEN M3'].sum().reset_index()
     
-    # Crear un DataFrame para el mapa de calor
-    # Aseguramos que todos los departamentos estén listados (incluso si hay departamentos sin datos)
-    departamentos = [
-        'Amazonas', 'Antioquia', 'Arauca', 'Atlántico', 'Bolívar', 'Boyacá', 'Caldas', 'Caquetá', 
-        'Casanare', 'Cauca', 'Cesar', 'Chocó', 'Córdoba', 'Cundinamarca', 'Guaviare', 'Guainía', 
-        'Huila', 'La Guajira', 'Magdalena', 'Meta', 'Nariño', 'Norte de Santander', 'Putumayo', 
-        'Quindío', 'Risaralda', 'San Andrés y Providencia', 'Santander', 'Sucre', 'Tolima', 
-        'Valle del Cauca', 'Vaupés', 'Vichada'
-    ]
+    # Cargar el archivo GeoJSON de los departamentos de Colombia
+    url_geojson = "https://raw.githubusercontent.com/colombia-dev/geojson-colombia/master/depto.geo.json"
+    gdf = gpd.read_file(url_geojson)
     
-    # Asegurar que todos los departamentos están en el DataFrame, aunque algunos pueden tener volumen = 0
-    volumen_por_departamento = volumen_por_departamento.set_index('DPTO').reindex(departamentos, fill_value=0).reset_index()
+    # Asegurarse de que los nombres de los departamentos coincidan entre el DataFrame y el GeoDataFrame
+    gdf['DPTO'] = gdf['NOMBRE_DPT'].str.upper()
+    volumen_por_departamento['DPTO'] = volumen_por_departamento['DPTO'].str.upper()
     
-    # Crear una tabla de volúmenes por departamento para el gráfico
-    volumen_por_departamento = volumen_por_departamento.set_index('DPTO')
-
-    # Crear un gráfico de mapa de calor
-    plt.figure(figsize=(12, 8))
-    sns.heatmap(volumen_por_departamento.T, annot=True, fmt=",.0f", cmap="Blues", cbar=True, linewidths=0.5)
+    # Unir los datos de volumen con el GeoDataFrame
+    gdf = gdf.merge(volumen_por_departamento, on='DPTO', how='left')
+    gdf['VOLUMEN M3'] = gdf['VOLUMEN M3'].fillna(0)  # Rellenar los valores NaN con 0
     
-    # Título y etiquetas
-    plt.title('Mapa de Calor de Volúmenes de Madera por Departamento', fontsize=16)
-    plt.xlabel('Volumen de Madera (m3)', fontsize=12)
-    plt.ylabel('Departamento', fontsize=12)
+    # Crear el mapa de calor usando Plotly
+    fig = px.choropleth(gdf,
+                        geojson=gdf.geometry,
+                        locations=gdf.index,
+                        color="VOLUMEN M3",
+                        hover_name="NOMBRE_DPT",
+                        color_continuous_scale="Viridis",
+                        labels={'VOLUMEN M3': 'Volumen de Madera (m3)'},
+                        title="Mapa de Calor de Volúmenes de Madera por Departamento")
     
-    # Rotar las etiquetas del eje Y para mejor visibilidad
-    plt.yticks(rotation=0)  # Asegura que los nombres de los departamentos estén horizontales
+    fig.update_geos(fitbounds="locations", visible=False)
+    fig.update_layout(margin={"r":0,"t":30,"l":0,"b":0})
     
     # Mostrar el gráfico en Streamlit
-    st.pyplot(plt)
+    st.plotly_chart(fig)
 
 
 def main():
