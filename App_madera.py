@@ -95,45 +95,55 @@ def generar_mapa_calor(df):
     # Mostrar el gráfico en Streamlit
     st.pyplot(fig)
 
-def generar_mapa_top_10_municipios(df):
+def generar_mapa_top_10_municipios(df, df_coordenadas):
     """
     Genera un mapa de Colombia con los diez municipios con mayor movilización de madera.
     
     Args:
         df (pd.DataFrame): DataFrame con los datos de madera.
+        df_coordenadas (pd.DataFrame): DataFrame con las coordenadas de los municipios.
     """
+    # Convertir los nombres de los municipios a minúsculas en el dataset original
+    df['MUNICIPIO'] = df['MUNICIPIO'].str.lower()
+    
     # Agrupar los volúmenes de madera por municipio
     vol_por_municipio = df.groupby('MUNICIPIO')['VOLUMEN M3'].sum().reset_index()
     
     # Ordenar y seleccionar los 10 municipios con mayor volumen
     top_10_municipios = vol_por_municipio.sort_values(by='VOLUMEN M3', ascending=False).head(10)
     
+    # Unir los datos de los municipios con mayor volumen con las coordenadas
+    top_10_municipios = top_10_municipios.merge(
+        df_coordenadas,
+        left_on='MUNICIPIO',
+        right_on='NOMBRE_MUNICIPIO',
+        how='inner'
+    )
+    
+    # Crear un GeoDataFrame con los municipios y sus coordenadas
+    gdf = gpd.GeoDataFrame(
+        top_10_municipios,
+        geometry=gpd.points_from_xy(top_10_municipios['LONGITUD'], top_10_municipios['LATITUD'])
+    )
+    
     # Cargar el archivo GeoJSON de Colombia
     colombia = gpd.read_file('https://raw.githubusercontent.com/Ritz38/Analisis_maderas/refs/heads/main/Colombia.geo.json')
-
+    
     # Crear la figura y el eje
     fig, ax = plt.subplots()
     
     # Graficar el mapa base de Colombia
     colombia.plot(ax=ax, color='lightgray', linewidth=0.8, edgecolor='k')
     
-    # Resaltar los 10 municipios con mayor volumen
-    for idx, row in top_10_municipios.iterrows():
-        municipio = row['MUNICIPIO']
-        volumen = row['VOLUMEN M3']
-        
-        # Filtrar el municipio en el GeoDataFrame
-        print(type(colombia))
-        municipio_geo = colombia[colombia['NOMBRE_DPT'] == municipio]
-        
-        # Graficar el municipio resaltado
-        municipio_geo.plot(ax=ax, color='red', edgecolor='k', linewidth=0.8)
-        
-        # Añadir etiqueta con el nombre del municipio y el volumen
+    # Graficar los 10 municipios con mayor volumen
+    gdf.plot(ax=ax, color='red', markersize=100, edgecolor='k', label='Top 10 municipios')
+    
+    # Añadir etiquetas con el nombre del municipio y el volumen
+    for idx, row in gdf.iterrows():
         ax.text(
-            x=municipio_geo.geometry.centroid.x,
-            y=municipio_geo.geometry.centroid.y,
-            s=f"{municipio}\n{volumen:.2f} m³",
+            x=row['LONGITUD'],
+            y=row['LATITUD'],
+            s=f"{row['MUNICIPIO'].title()}\n{row['VOLUMEN M3']:.2f} m³",
             fontsize=8,
             ha='center',
             va='center',
@@ -173,6 +183,8 @@ def main():
         generar_mapa_calor(df)
     elif opcion == "Top 10 municipios con mayor movilización":
         generar_mapa_top_10_municipios(df)
+
+    print(df)
     
 
 if __name__ == "__main__":
