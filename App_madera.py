@@ -154,20 +154,20 @@ def generar_mapa_top_10_municipios(df):
     # Graficar el mapa base de Colombia
     colombia.plot(ax=ax, color='lightgray', linewidth=0.8, edgecolor='k')
     
-    # Graficar los 10 municipios con mayor volumen
-    gdf.plot(ax=ax, color='red', markersize=100, edgecolor='k', label='Top 10 municipios')
+    # Graficar los 10 municipios con mayor volumen (círculos más pequeños)
+    gdf.plot(ax=ax, color='red', markersize=50, edgecolor='k', label='Top 10 municipios')
     
-    # Añadir etiquetas con el nombre del municipio y el volumen
+    # Añadir etiquetas con el nombre del municipio (sin el volumen)
     for idx, row in gdf.iterrows():
         ax.text(
             x=row['LONGITUD'],
             y=row['LATITUD'],
-            s=f"{row['MUNICIPIO'].title()}\n{row['VOLUMEN M3']:.2f} m³",
+            s=row['MUNICIPIO'].title(),  # Solo el nombre del municipio
             fontsize=8,
             ha='center',
             va='center',
             color='black',
-            bbox=dict(facecolor='white', alpha=0.7, edgecolor='none')
+            bbox=dict(facecolor='white', alpha=0.7, edgecolor='none', boxstyle='round,pad=0.2')  # Cuadros más pequeños
         )
     
     # Establecer el título
@@ -175,7 +175,6 @@ def generar_mapa_top_10_municipios(df):
     
     # Mostrar el gráfico en Streamlit
     st.pyplot(fig)
-
 
 def main():
     """
