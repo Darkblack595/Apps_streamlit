@@ -73,52 +73,40 @@ def mostrar_visualizaciones(datos):
     st.plotly_chart(fig_departamento)
 
 
-import geopandas as gpd
-import matplotlib.pyplot as plt
-import pandas as pd
-import streamlit as st
 
 def generar_mapa_calor(df):
     """
-    Genera un mapa de Sudamérica utilizando GeoPandas y Matplotlib,
-    resaltando los volúmenes de madera para cada país en Sudamérica.
+    Genera un mapa de calor normal mostrando los volúmenes de madera por país en Sudamérica.
     
     Args:
         df (pd.DataFrame): DataFrame con los datos de madera.
     """
-    # Cargar el conjunto de datos de países desde el archivo ZIP en la URL proporcionada
-    url = "https://naturalearth.s3.amazonaws.com/50m_cultural/ne_50m_admin_0_countries.zip"
-    
-    # Leer los datos directamente desde el archivo ZIP en la URL
-    world = gpd.read_file(url)
-    
-    # Filtrar solo los países de Sudamérica
-    south_america = world[world['CONTINENT'] == "South America"].copy()
-    
-    # Agrupar los volúmenes de madera por país
+    # Cargar los datos del volumen de madera por país (usamos municipios, pero esto puede cambiar dependiendo del dataset)
     volumen_por_pais = df.groupby('MUNICIPIO')['VOLUMEN M3'].sum().reset_index()
     
-    # Asumimos que los municipios corresponden a los países en el GeoDataset.
-    # Mapeamos el volumen de madera a la columna correspondiente de Sudamérica.
-    south_america["wood_volume"] = south_america['NAME'].map(
-        lambda x: volumen_por_pais[volumen_por_pais['MUNICIPIO'] == x]['VOLUMEN M3'].sum() if x in volumen_por_pais['MUNICIPIO'].values else 0)
+    # Filtrar países de Sudamérica, puedes modificar esto si el dataset tiene un campo para país
+    paises_sudamerica = [
+        'Argentina', 'Bolivia', 'Brasil', 'Chile', 'Colombia', 'Ecuador', 'Guyana', 'Paraguay', 'Perú', 'Surinam', 'Uruguay', 'Venezuela'
+    ]
     
-    # Plotear el mapa de Sudamérica
-    fig, ax = plt.subplots(1, 1, figsize=(12, 10))
-    south_america.plot(column="wood_volume", 
-                       ax=ax, 
-                       legend=True,
-                       cmap="Blues", 
-                       missing_kwds={"color": "lightgrey", "edgecolor": "red", "hatch": "///", "label": "Sin datos"})
+    # Filtrar solo los países de Sudamérica presentes en el dataset
+    volumen_por_pais_sudamerica = volumen_por_pais[volumen_por_pais['MUNICIPIO'].isin(paises_sudamerica)]
     
-    # Ajustar el título y la visualización
-    ax.set_title("Mapa de Madera en Sudamérica (Volúmenes de madera por país)", fontsize=15)
-    ax.set_axis_off()
+    # Ordenar el DataFrame por el volumen de madera
+    volumen_por_pais_sudamerica = volumen_por_pais_sudamerica.sort_values(by='VOLUMEN M3', ascending=False)
+    
+    # Crear un gráfico de barras
+    plt.figure(figsize=(10, 6))
+    sns.barplot(x='MUNICIPIO', y='VOLUMEN M3', data=volumen_por_pais_sudamerica, palette='Blues_d')
+    
+    # Agregar título y etiquetas
+    plt.title('Volumen de Madera por País en Sudamérica', fontsize=16)
+    plt.xlabel('País', fontsize=12)
+    plt.ylabel('Volumen de Madera (m3)', fontsize=12)
+    plt.xticks(rotation=45, ha='right')
     
     # Mostrar el gráfico en Streamlit
-    st.pyplot(fig)
-
-
+    st.pyplot(plt)
 
 
 def main():
