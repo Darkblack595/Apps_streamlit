@@ -155,7 +155,7 @@ def generar_mapa_top_10_municipios(df):
     colombia.plot(ax=ax, color='lightgray', linewidth=0.8, edgecolor='k')
     
     # Graficar los 10 municipios con mayor volumen (círculos más pequeños)
-    gdf.plot(ax=ax, color='red', markersize=50, edgecolor='k', label='Top 10 municipios')
+    gdf.plot(ax=ax, color='red', markersize=50, edgecolor='k')
     
     # Añadir etiquetas con el nombre del municipio (sin el volumen)
     for idx, row in gdf.iterrows():
@@ -167,16 +167,8 @@ def generar_mapa_top_10_municipios(df):
             ha='center',
             va='center',
             color='black',
-            bbox=dict(facecolor='white', alpha=0.7, edgecolor='none', boxstyle='round,pad=0.1')  # Cuadros más pequeños
+            bbox=dict(facecolor='white', alpha=0.0, edgecolor='none')  # Cuadros transparentes
         )
-    
-    # Crear una leyenda con los nombres de los municipios
-    legend_labels = [f"{row['MUNICIPIO'].title()}" for _, row in gdf.iterrows()]
-    ax.legend(handles=[plt.Line2D([0], [0], marker='o', color='w', markerfacecolor='red', markersize=8)],
-              labels=legend_labels,
-              title="Municipios",
-              loc='upper right',
-              fontsize='small')
     
     # Establecer el título
     ax.set_title("Top 10 municipios con mayor movilización de madera")
