@@ -1,7 +1,6 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
-import matplotlib.pyplot as plt
 import geopandas as gpd
 
 def cargar_datos(url):
@@ -70,10 +69,9 @@ def mostrar_visualizaciones(datos):
     fig_departamento = px.bar(df_filtrado, x='ESPECIE', y='VOLUMEN M3', title=f'Volumen por especie en {departamento_seleccionado}')
     st.plotly_chart(fig_departamento)
 
-
 def generar_mapa_calor(df):
     """
-    Genera un mapa de calor que muestra la distribución de volúmenes de madera por departamento en Colombia.
+    Genera un mapa de calor con los volúmenes de madera por departamento en Colombia.
     
     Args:
         df (pd.DataFrame): DataFrame con los datos de madera.
@@ -81,34 +79,27 @@ def generar_mapa_calor(df):
     # Agrupar los volúmenes de madera por departamento
     volumen_por_departamento = df.groupby('DPTO')['VOLUMEN M3'].sum().reset_index()
     
-    # Cargar el archivo GeoJSON de los departamentos de Colombia
-    url_geojson = "https://raw.githubusercontent.com/colombia-dev/geojson-colombia/master/depto.geo.json"
-    gdf = gpd.read_file(url_geojson)
-    
-    # Asegurarse de que los nombres de los departamentos coincidan entre el DataFrame y el GeoDataFrame
-    gdf['DPTO'] = gdf['NOMBRE_DPT'].str.upper()
-    volumen_por_departamento['DPTO'] = volumen_por_departamento['DPTO'].str.upper()
+    # Cargar el GeoDataFrame de Colombia
+    colombia_geo = gpd.read_file('https://raw.githubusercontent.com/Darkblack595/Apps_streamlit/main/colombia.geojson')
     
     # Unir los datos de volumen con el GeoDataFrame
-    gdf = gdf.merge(volumen_por_departamento, on='DPTO', how='left')
-    gdf['VOLUMEN M3'] = gdf['VOLUMEN M3'].fillna(0)  # Rellenar los valores NaN con 0
+    colombia_geo = colombia_geo.merge(volumen_por_departamento, left_on='NOMBRE_DPT', right_on='DPTO', how='left')
     
-    # Crear el mapa de calor usando Plotly
-    fig = px.choropleth(gdf,
-                        geojson=gdf.geometry,
-                        locations=gdf.index,
-                        color="VOLUMEN M3",
-                        hover_name="NOMBRE_DPT",
-                        color_continuous_scale="Viridis",
-                        labels={'VOLUMEN M3': 'Volumen de Madera (m3)'},
-                        title="Mapa de Calor de Volúmenes de Madera por Departamento")
+    # Crear el mapa coroplético
+    fig = px.choropleth(colombia_geo, 
+                        geojson=colombia_geo.geometry, 
+                        locations=colombia_geo.index, 
+                        color='VOLUMEN M3',
+                        hover_name='NOMBRE_DPT',
+                        projection="mercator",
+                        title='Distribución de Volúmenes de Madera por Departamento en Colombia')
     
+    # Ajustar el layout del mapa
     fig.update_geos(fitbounds="locations", visible=False)
-    fig.update_layout(margin={"r":0,"t":30,"l":0,"b":0})
+    fig.update_layout(margin={"r":0,"t":40,"l":0,"b":0})
     
-    # Mostrar el gráfico en Streamlit
+    # Mostrar el mapa en Streamlit
     st.plotly_chart(fig)
-
 
 def main():
     """
