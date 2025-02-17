@@ -155,7 +155,7 @@ def generar_mapa_top_10_municipios(df):
     colombia.plot(ax=ax, color='lightgray', linewidth=0.8, edgecolor='k')
     
     # Graficar los 10 municipios con mayor volumen (círculos más pequeños)
-    gdf.plot(ax=ax, color='red', markersize=50, edgecolor='k')
+    gdf.plot(ax=ax, color='red', markersize=50, edgecolor='k', label='Top 10 municipios')
     
     # Añadir etiquetas con el nombre del municipio (sin el volumen)
     for idx, row in gdf.iterrows():
@@ -163,11 +163,11 @@ def generar_mapa_top_10_municipios(df):
             x=row['LONGITUD'],
             y=row['LATITUD'],
             s=row['MUNICIPIO'].title(),  # Solo el nombre del municipio
-            fontsize=6,  # Fuente más pequeña
+            fontsize=8,
             ha='center',
             va='center',
             color='black',
-            bbox=dict(facecolor='white', alpha=0.0, edgecolor='none')  # Cuadros transparentes
+            bbox=dict(facecolor='white', alpha=0.7, edgecolor='none', boxstyle='round,pad=0.2')  # Cuadros más pequeños
         )
     
     # Establecer el título
