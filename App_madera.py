@@ -15,7 +15,6 @@ def cargar_datos(url):
         pd.DataFrame: DataFrame con los datos cargados.
     """
     df = pd.read_csv(url)
-    df['DPTO'] = df['DPTO'].str.upper()
     return df
 
 def calcular_maderas_comunes(df):
@@ -72,13 +71,9 @@ def mostrar_visualizaciones(datos):
     fig_departamento = px.bar(df_filtrado, x='ESPECIE', y='VOLUMEN M3', title=f'Volumen por especie en {departamento_seleccionado}')
     st.plotly_chart(fig_departamento)
 
-import streamlit as st
-import pandas as pd
-import geopandas as gpd
-import matplotlib.pyplot as plt
-
 def generar_mapa_calor(df):
     """Genera un mapa de calor de volúmenes de madera por departamento."""
+    df['DPTO'] = df['DPTO'].str.upper()
     # Cargar el archivo GeoJSON de Colombia
     colombia = gpd.read_file('https://raw.githubusercontent.com/Ritz38/Analisis_maderas/refs/heads/main/Colombia.geo.json')
     
@@ -100,6 +95,58 @@ def generar_mapa_calor(df):
     # Mostrar el gráfico en Streamlit
     st.pyplot(fig)
 
+def generar_mapa_top_10_municipios(df):
+    """
+    Genera un mapa de Colombia con los diez municipios con mayor movilización de madera.
+    
+    Args:
+        df (pd.DataFrame): DataFrame con los datos de madera.
+    """
+    # Agrupar los volúmenes de madera por municipio
+    vol_por_municipio = df.groupby('MUNICIPIO')['VOLUMEN M3'].sum().reset_index()
+    
+    # Ordenar y seleccionar los 10 municipios con mayor volumen
+    top_10_municipios = vol_por_municipio.sort_values(by='VOLUMEN M3', ascending=False).head(10)
+    
+    # Cargar el archivo GeoJSON de Colombia
+    colombia = gpd.read_file('https://raw.githubusercontent.com/Ritz38/Analisis_maderas/refs/heads/main/Colombia.geo.json')
+    
+    # Crear la figura y el eje
+    fig, ax = plt.subplots()
+    
+    # Graficar el mapa base de Colombia
+    colombia.plot(ax=ax, color='lightgray', linewidth=0.8, edgecolor='k')
+    
+    # Resaltar los 10 municipios con mayor volumen
+    for idx, row in top_10_municipios.iterrows():
+        municipio = row['MUNICIPIO']
+        volumen = row['VOLUMEN M3']
+        
+        # Filtrar el municipio en el GeoDataFrame
+        municipio_geo = colombia[colombia['NOMBRE_MPIO'] == municipio]
+        
+        # Graficar el municipio resaltado
+        municipio_geo.plot(ax=ax, color='red', edgecolor='k', linewidth=0.8)
+        
+        # Añadir etiqueta con el nombre del municipio y el volumen
+        ax.text(
+            x=municipio_geo.geometry.centroid.x,
+            y=municipio_geo.geometry.centroid.y,
+            s=f"{municipio}\n{volumen:.2f} m³",
+            fontsize=8,
+            ha='center',
+            va='center',
+            color='black',
+            bbox=dict(facecolor='white', alpha=0.7, edgecolor='none')
+        )
+    
+    # Establecer el título
+    ax.set_title("Top 10 municipios con mayor movilización de madera")
+    
+    # Mostrar el gráfico en Streamlit
+    st.pyplot(fig)
+
+
 def main():
     """
     Función principal para ejecutar la aplicación en Streamlit.
@@ -113,7 +160,8 @@ def main():
     opcion = st.sidebar.selectbox("Selecciona una funcionalidad", [
         "Especies más comunes",
         "Top 10 especies con mayor volumen",
-        "Mapa de calor por departamento"
+        "Mapa de calor por departamento",
+        "Top 10 municipios con mayor movilización"
     ])
     
     if opcion == "Especies más comunes":
@@ -122,6 +170,8 @@ def main():
         mostrar_top_10_maderas(df)
     elif opcion == "Mapa de calor por departamento":
         generar_mapa_calor(df)
+    elif opcion == "Top 10 municipios con mayor movilización":
+        generar_mapa_top_10_municipios(df)
     
 
 if __name__ == "__main__":
