@@ -3,6 +3,8 @@ import pandas as pd
 import plotly.express as px
 import json
 import requests
+import matplotlib.pyplot as plt
+import geopandas as gpd
 
 def cargar_datos(url):
     """
