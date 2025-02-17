@@ -1,7 +1,6 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
-import geopandas as gpd
 import requests
 
 def cargar_datos(url):
@@ -100,7 +99,8 @@ def generar_mapa_calor(df):
                         featureidkey="properties.NOMBRE_DPT",
                         color='VOLUMEN M3',
                         hover_name='DPTO',
-                        color_continuous_scale="Blues",
+                        color_continuous_scale="Viridis",  # Escala de colores
+                        range_color=(0, df_merged['VOLUMEN M3'].max()),  # Rango de colores
                         title='Distribución de Volúmenes de Madera por Departamento en Colombia')
     
     # Ajustar el layout del mapa
