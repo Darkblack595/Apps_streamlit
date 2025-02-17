@@ -106,12 +106,14 @@ def generar_mapa_calor(df):
     
     # Título y etiquetas
     plt.title('Mapa de Calor de Volúmenes de Madera por Departamento', fontsize=16)
-    plt.xlabel('Departamento', fontsize=12)
-    plt.ylabel('Volumen de Madera (m3)', fontsize=12)
+    plt.xlabel('Volumen de Madera (m3)', fontsize=12)
+    plt.ylabel('Departamento', fontsize=12)
+    
+    # Rotar las etiquetas del eje Y para mejor visibilidad
+    plt.yticks(rotation=0)  # Asegura que los nombres de los departamentos estén horizontales
     
     # Mostrar el gráfico en Streamlit
     st.pyplot(plt)
-
 
 
 def main():
