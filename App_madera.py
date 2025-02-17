@@ -179,19 +179,38 @@ def generar_mapa_top_10_municipios(df):
 def analizar_evolucion_temporal(df):
     """
     Analiza la evolución temporal del volumen de madera movilizada por especie y tipo de producto.
+    Filtra las opciones de especie y tipo de producto para mostrar solo combinaciones con datos disponibles.
     
     Args:
         df (pd.DataFrame): DataFrame con los datos de madera.
     """
     st.subheader("Evolución temporal del volumen de madera movilizada")
     
+    # Filtrar combinaciones de especie y tipo de producto que tienen datos
+    combinaciones_validas = df.groupby(['ESPECIE', 'TIPO PRODUCTO']).size().reset_index(name='count')
+    
+    # Crear listas de especies y tipos de producto válidos
+    especies_validas = combinaciones_validas['ESPECIE'].unique()
+    tipos_producto_validos = combinaciones_validas['TIPO PRODUCTO'].unique()
+    
     # Seleccionar la especie
-    especies = df['ESPECIE'].unique()
-    especie_seleccionada = st.selectbox("Selecciona una especie", especies)
+    if len(especies_validas) > 0:
+        especie_seleccionada = st.selectbox("Selecciona una especie", especies_validas)
+    else:
+        st.warning("No hay datos disponibles para ninguna especie.")
+        return
+    
+    # Filtrar tipos de producto válidos para la especie seleccionada
+    tipos_producto_filtrados = combinaciones_validas[
+        combinaciones_validas['ESPECIE'] == especie_seleccionada
+    ]['TIPO PRODUCTO'].unique()
     
     # Seleccionar el tipo de producto
-    tipos_producto = df['TIPO PRODUCTO'].unique()
-    tipo_producto_seleccionado = st.selectbox("Selecciona un tipo de producto", tipos_producto)
+    if len(tipos_producto_filtrados) > 0:
+        tipo_producto_seleccionado = st.selectbox("Selecciona un tipo de producto", tipos_producto_filtrados)
+    else:
+        st.warning(f"No hay datos disponibles para la especie '{especie_seleccionada}'.")
+        return
     
     # Filtrar el DataFrame por la especie y tipo de producto seleccionados
     df_filtrado = df[(df['ESPECIE'] == especie_seleccionada) & (df['TIPO PRODUCTO'] == tipo_producto_seleccionado)]
@@ -211,10 +230,12 @@ def analizar_evolucion_temporal(df):
         df_agrupado['PERIODO'] = df_agrupado['AÑO'].astype(str) + ' - ' + df_agrupado['TRIMESTRE'].astype(str)
         x_axis = 'PERIODO'
     
-    # Mostrar el gráfico de línea
-    fig = px.line(df_agrupado, x=x_axis, y='VOLUMEN M3', title=f'Evolución temporal de {especie_seleccionada} - {tipo_producto_seleccionado}')
-
-    st.plotly_chart(fig)
+    # Mostrar el gráfico de línea si hay datos
+    if len(df_agrupado) > 0:
+        fig = px.line(df_agrupado, x=x_axis, y='VOLUMEN M3', title=f'Evolución temporal de {especie_seleccionada} - {tipo_producto_seleccionado}')
+        st.plotly_chart(fig)
+    else:
+        st.warning(f"No hay datos disponibles para la combinación seleccionada: {especie_seleccionada} - {tipo_producto_seleccionado}.")
 
 
 def identificar_outliers(df):
