@@ -88,7 +88,7 @@ def generar_mapa_calor(df):
     volumen_total = df['VOLUMEN M3'].sum()
     
     # Cargar el conjunto de datos de países (Natural Earth)
-    world = gpd.read_file(gpd.datasets.get_path("naturalearth_lowres"))
+    world = gpd.read_file("https://naturalearth.s3.amazonaws.com/50m_cultural\/ne_50m_admin_0_countries.zip")
     
     # Filtrar solo los países de Sudamérica
     south_america = world[world['continent'] == "South America"].copy()
