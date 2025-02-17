@@ -70,15 +70,12 @@ def mostrar_visualizaciones(datos):
     fig_departamento = px.bar(df_filtrado, x='ESPECIE', y='VOLUMEN M3', title=f'Volumen por especie en {departamento_seleccionado}')
     st.plotly_chart(fig_departamento)
 
-import geopandas as gpd
-import matplotlib.pyplot as plt
-import pandas as pd
-import streamlit as st
 
 def generar_mapa_calor(df):
     """
-    Genera un mapa de Sudamérica utilizando GeoPandas y Matplotlib, 
-    resaltando a Colombia con base en el volumen total de madera.
+    Genera un mapa de Sudamérica utilizando GeoPandas y Matplotlib,
+    resaltando a Colombia con base en el volumen total de madera,
+    utilizando un archivo ZIP con los límites de los países.
     
     Args:
         df (pd.DataFrame): DataFrame con los datos de madera.
@@ -87,8 +84,11 @@ def generar_mapa_calor(df):
     # Se agrupa y se obtiene el total de madera para Colombia.
     volumen_total = df['VOLUMEN M3'].sum()
     
-    # Cargar el conjunto de datos de países (Natural Earth)
-    world = gpd.read_file("https://naturalearth.s3.amazonaws.com/50m_cultural\/ne_50m_admin_0_countries.zip")
+    # Cargar el conjunto de datos de países desde el archivo ZIP en la URL proporcionada
+    url = "https://naturalearth.s3.amazonaws.com/50m_cultural/ne_50m_admin_0_countries.zip"
+    
+    # Leer los datos directamente desde el archivo ZIP en la URL
+    world = gpd.read_file(url)
     
     # Filtrar solo los países de Sudamérica
     south_america = world[world['continent'] == "South America"].copy()
@@ -113,6 +113,7 @@ def generar_mapa_calor(df):
     ax.set_axis_off()
     
     st.pyplot(fig)
+
 
 
 def main():
