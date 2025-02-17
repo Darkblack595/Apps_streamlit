@@ -93,7 +93,7 @@ def generar_mapa_calor(df):
     world = gpd.read_file(url)
     
     # Filtrar solo los países de Sudamérica
-    south_america = world[world['continent'] == "South America"].copy()
+    south_america = world[world['CONTINENT'] == "South America"].copy()
     
     # Crear una nueva columna para almacenar el volumen de madera (inicialmente en 0)
     south_america["wood_volume"] = 0.0
