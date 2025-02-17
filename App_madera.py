@@ -38,6 +38,21 @@ def calcular_maderas_comunes(df):
     }
 
 
+def mostrar_top_10_maderas(df):
+    """
+    Muestra un gráfico de barras con las diez especies de madera con mayor volumen movilizado.
+    
+    Args:
+        df (pd.DataFrame): DataFrame con los datos de madera.
+    """
+    df_top_10 = df.groupby('ESPECIE')['VOLUMEN M3'].sum().reset_index()
+    df_top_10 = df_top_10.sort_values(by='VOLUMEN M3', ascending=False).head(10)
+    
+    st.subheader("Top 10 especies de madera con mayor volumen movilizado")
+    fig_top_10 = px.bar(df_top_10, x='ESPECIE', y='VOLUMEN M3', title='Top 10 especies con mayor volumen movilizado')
+    st.plotly_chart(fig_top_10)
+
+
 def mostrar_visualizaciones(datos):
     """
     Muestra gráficos en Streamlit con la información de las especies de madera más comunes.
@@ -68,6 +83,7 @@ def main():
     df = cargar_datos(url)
     datos = calcular_maderas_comunes(df)
     mostrar_visualizaciones(datos)
+    mostrar_top_10_maderas(df)
 
 
 if __name__ == "__main__":
