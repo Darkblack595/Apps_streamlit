@@ -1,7 +1,8 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
-
+import json
+import requests
 
 def cargar_datos(url):
     """
@@ -14,7 +15,6 @@ def cargar_datos(url):
         pd.DataFrame: DataFrame con los datos cargados.
     """
     return pd.read_csv(url)
-
 
 def calcular_maderas_comunes(df):
     """
@@ -37,7 +37,6 @@ def calcular_maderas_comunes(df):
         'departamento': df_agrupado_departamento
     }
 
-
 def mostrar_top_10_maderas(df):
     """
     Muestra un gráfico de barras con las diez especies de madera con mayor volumen movilizado.
@@ -51,7 +50,6 @@ def mostrar_top_10_maderas(df):
     st.subheader("Top 10 especies de madera con mayor volumen movilizado")
     fig_top_10 = px.bar(df_top_10, x='ESPECIE', y='VOLUMEN M3', title='Top 10 especies con mayor volumen movilizado')
     st.plotly_chart(fig_top_10)
-
 
 def mostrar_visualizaciones(datos):
     """
@@ -72,7 +70,6 @@ def mostrar_visualizaciones(datos):
     fig_departamento = px.bar(df_filtrado, x='ESPECIE', y='VOLUMEN M3', title=f'Volumen por especie en {departamento_seleccionado}')
     st.plotly_chart(fig_departamento)
 
-
 def generar_mapa_calor(df):
     """
     Genera un mapa de calor que muestra la distribución de volúmenes de madera por departamento.
@@ -82,11 +79,20 @@ def generar_mapa_calor(df):
     """
     df_departamento = df.groupby('DPTO')['VOLUMEN M3'].sum().reset_index()
     
+    # Cargar el GeoJSON de Colombia con los departamentos
+    url_geojson = "https://raw.githubusercontent.com/ferregox/colombia_geojson/master/colombia.geojson"
+    geojson = requests.get(url_geojson).json()
+    
     st.subheader("Mapa de calor de volúmenes de madera por departamento")
-    fig_mapa = px.choropleth(df_departamento, locations='DPTO', locationmode='ISO-3',
-                             color='VOLUMEN M3', title='Distribución de volúmenes por departamento')
+    fig_mapa = px.choropleth(df_departamento, 
+                             geojson=geojson, 
+                             locations='DPTO', 
+                             featureidkey="properties.NOMBRE_DPT", 
+                             color='VOLUMEN M3', 
+                             title='Distribución de volúmenes por departamento',
+                             color_continuous_scale="Blues")
+    fig_mapa.update_geos(fitbounds="locations", visible=False)
     st.plotly_chart(fig_mapa)
-
 
 def main():
     """
@@ -110,7 +116,6 @@ def main():
         mostrar_top_10_maderas(df)
     elif opcion == "Mapa de calor por departamento":
         generar_mapa_calor(df)
-
 
 if __name__ == "__main__":
     main()
