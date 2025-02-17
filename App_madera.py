@@ -305,6 +305,55 @@ def agrupar_por_municipio(df):
     fig = px.bar(df_agrupado, x='MUNICIPIO', y='VOLUMEN M3', title='Volumen total de madera por municipio')
     st.plotly_chart(fig)
 
+def especies_menor_volumen_distribucion(df):
+    """
+    Identifica las especies de madera con menor volumen movilizado y analiza su distribución geográfica.
+    
+    Args:
+        df (pd.DataFrame): DataFrame con los datos de madera.
+    """
+    st.subheader("Especies con menor volumen movilizado y su distribución geográfica")
+    
+    # Agrupar por especie y calcular el volumen total movilizado
+    df_agrupado_especies = df.groupby('ESPECIE')['VOLUMEN M3'].sum().reset_index()
+    
+    # Ordenar por volumen (de menor a mayor) y seleccionar las 10 especies con menor volumen
+    df_menor_volumen = df_agrupado_especies.sort_values(by='VOLUMEN M3', ascending=True).head(10)
+    
+    # Mostrar las especies con menor volumen
+    st.write("### Especies con menor volumen movilizado:")
+    st.dataframe(df_menor_volumen)
+    
+    # Seleccionar una especie para analizar su distribución geográfica
+    especie_seleccionada = st.selectbox(
+        "Selecciona una especie para analizar su distribución geográfica",
+        df_menor_volumen['ESPECIE']
+    )
+    
+    # Filtrar el DataFrame para la especie seleccionada
+    df_filtrado = df[df['ESPECIE'] == especie_seleccionada]
+    
+    # Agrupar por departamento y calcular el volumen total movilizado
+    df_agrupado_departamento = df_filtrado.groupby('DPTO')['VOLUMEN M3'].sum().reset_index()
+    
+    # Cargar el archivo GeoJSON de Colombia
+    colombia = gpd.read_file('https://raw.githubusercontent.com/Ritz38/Analisis_maderas/refs/heads/main/Colombia.geo.json')
+    
+    # Unir los datos de volumen con el GeoDataFrame
+    df_geo = colombia.merge(df_agrupado_departamento, left_on='NOMBRE_DPT', right_on='DPTO', how='left')
+    
+    # Crear la figura y el eje
+    fig, ax = plt.subplots()
+    
+    # Graficar el mapa de calor
+    df_geo.plot(column='VOLUMEN M3', cmap='YlOrRd', linewidth=0.8, edgecolor='k', legend=True, ax=ax)
+    
+    # Establecer el título
+    ax.set_title(f"Distribución geográfica de {especie_seleccionada}")
+    
+    # Mostrar el gráfico en Streamlit
+    st.pyplot(fig)
+
 def main():
     """
     Función principal para ejecutar la aplicación en Streamlit.
@@ -322,7 +371,8 @@ def main():
         "Top 10 municipios con mayor movilización",
         "Evolución temporal por especie y tipo de producto",
         "Identificar outliers en los volúmenes de madera",
-        "Volumen total de madera por municipio"
+        "Volumen total de madera por municipio",
+        "Especies con menor volumen y distribución geográfica"
     ])
     
     if opcion == "Especies más comunes":
@@ -339,6 +389,8 @@ def main():
         identificar_outliers(df)
     elif opcion == "Volumen total de madera por municipio":
         agrupar_por_municipio(df)
+    elif opcion == "Especies con menor volumen y distribución geográfica":
+        especies_menor_volumen_distribucion(df)
 
 if __name__ == "__main__":
     main()
