@@ -71,40 +71,38 @@ def mostrar_visualizaciones(datos):
     st.plotly_chart(fig_departamento)
 
 def generar_mapa_calor(df):
-    """
-    Genera un mapa de calor que muestra la distribución de volúmenes de madera por departamento.
-    
-    Args:
-        df (pd.DataFrame): DataFrame con los datos de madera.
-    """
     df_departamento = df.groupby('DPTO')['VOLUMEN M3'].sum().reset_index()
+
+    # Probar con otro enlace de GeoJSON (o el tuyo, si estás seguro de que funciona)
+    url_geojson = "https://raw.githubusercontent.com/JhonEstebanGomez/colombia_geojson/master/colombia.geojson"
     
-    # Limpiar los nombres de los departamentos para que coincidan con los del GeoJSON
-    df_departamento['DPTO'] = df_departamento['DPTO'].str.strip()  # Eliminar espacios extra
-    df_departamento['DPTO'] = df_departamento['DPTO'].str.title()  # Asegurarse de que estén con mayúsculas y minúsculas apropiadas
-    
-    # Cargar el GeoJSON de Colombia con los departamentos
-    url_geojson = "https://raw.githubusercontent.com/ferregox/colombia_geojson/master/colombia.geojson"
-    geojson = requests.get(url_geojson).json()
-    
-    # Obtener la lista de departamentos desde el GeoJSON para verificar coincidencia
-    departamentos_geojson = [feature['properties']['NOMBRE_DPT'] for feature in geojson['features']]
-    
-    # Verificar si todos los departamentos del DataFrame están en el GeoJSON
-    departamentos_no_encontrados = df_departamento[~df_departamento['DPTO'].isin(departamentos_geojson)]
-    if not departamentos_no_encontrados.empty:
-        st.warning(f"Los siguientes departamentos no se encontraron en el archivo GeoJSON: {', '.join(departamentos_no_encontrados['DPTO'])}")
-    
+    response = requests.get(url_geojson)
+    if response.status_code == 200:
+        try:
+            geojson = response.json()
+        except ValueError as e:
+            st.error("Error al decodificar el JSON. Revisa si el contenido es realmente un GeoJSON.")
+            st.stop()
+    else:
+        st.error(f"No se pudo obtener el GeoJSON. Código de estado: {response.status_code}")
+        st.stop()
+
+    # Limpiar nombres de departamentos
+    df_departamento['DPTO'] = df_departamento['DPTO'].str.strip().str.title()
+
     st.subheader("Mapa de calor de volúmenes de madera por departamento")
-    fig_mapa = px.choropleth(df_departamento, 
-                             geojson=geojson, 
-                             locations='DPTO', 
-                             featureidkey="properties.NOMBRE_DPT", 
-                             color='VOLUMEN M3', 
-                             title='Distribución de volúmenes por departamento',
-                             color_continuous_scale="Blues")
+    fig_mapa = px.choropleth(
+        df_departamento,
+        geojson=geojson,
+        locations='DPTO',
+        featureidkey="properties.NOMBRE_DPT",
+        color='VOLUMEN M3',
+        title='Distribución de volúmenes por departamento',
+        color_continuous_scale="Blues"
+    )
     fig_mapa.update_geos(fitbounds="locations", visible=False)
     st.plotly_chart(fig_mapa)
+
 
 
 def main():
