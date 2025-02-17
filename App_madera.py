@@ -69,40 +69,36 @@ def mostrar_visualizaciones(datos):
     df_filtrado = datos['departamento'][datos['departamento']['DPTO'] == departamento_seleccionado]
     fig_departamento = px.bar(df_filtrado, x='ESPECIE', y='VOLUMEN M3', title=f'Volumen por especie en {departamento_seleccionado}')
     st.plotly_chart(fig_departamento)
+    
 
 def generar_mapa_calor(df):
-    df_departamento = df.groupby('DPTO')['VOLUMEN M3'].sum().reset_index()
-
-    # Probar con otro enlace de GeoJSON (o el tuyo, si estás seguro de que funciona)
-    url_geojson = "https://raw.githubusercontent.com/JhonEstebanGomez/colombia_geojson/master/colombia.geojson"
+    """
+    Genera un mapa de calor que muestra la distribución de volúmenes de madera por departamento.
     
-    response = requests.get(url_geojson)
-    if response.status_code == 200:
-        try:
-            geojson = response.json()
-        except ValueError as e:
-            st.error("Error al decodificar el JSON. Revisa si el contenido es realmente un GeoJSON.")
-            st.stop()
-    else:
-        st.error(f"No se pudo obtener el GeoJSON. Código de estado: {response.status_code}")
-        st.stop()
-
-    # Limpiar nombres de departamentos
+    Args:
+        df (pd.DataFrame): DataFrame con los datos de madera.
+    """
+    # Agrupar los datos por departamento
+    df_departamento = df.groupby('DPTO')['VOLUMEN M3'].sum().reset_index()
+    
+    # Limpiar los nombres de los departamentos para que coincidan con los del GeoJSON
     df_departamento['DPTO'] = df_departamento['DPTO'].str.strip().str.title()
 
+    # Cargar el archivo GeoJSON local de Colombia
+    with open("colombia.geojson", "r") as f:
+        geojson = json.load(f)  # Carga el GeoJSON desde un archivo local
+
+    # Crear el mapa de calor
     st.subheader("Mapa de calor de volúmenes de madera por departamento")
-    fig_mapa = px.choropleth(
-        df_departamento,
-        geojson=geojson,
-        locations='DPTO',
-        featureidkey="properties.NOMBRE_DPT",
-        color='VOLUMEN M3',
-        title='Distribución de volúmenes por departamento',
-        color_continuous_scale="Blues"
-    )
+    fig_mapa = px.choropleth(df_departamento, 
+                             geojson=geojson, 
+                             locations='DPTO', 
+                             featureidkey="properties.NOMBRE_DPT", 
+                             color='VOLUMEN M3', 
+                             title='Distribución de volúmenes por departamento',
+                             color_continuous_scale="Blues")
     fig_mapa.update_geos(fitbounds="locations", visible=False)
     st.plotly_chart(fig_mapa)
-
 
 
 def main():
