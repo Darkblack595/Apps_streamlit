@@ -5,6 +5,7 @@ import json
 import requests
 import matplotlib.pyplot as plt
 import geopandas as gpd
+import seaborn as sns
 
 def cargar_datos(url):
     """
