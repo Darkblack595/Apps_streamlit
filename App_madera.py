@@ -74,40 +74,44 @@ def mostrar_visualizaciones(datos):
     st.plotly_chart(fig_departamento)
 
 
-
 def generar_mapa_calor(df):
     """
-    Genera un mapa de calor normal mostrando los volúmenes de madera por país en Sudamérica.
+    Genera un mapa de calor con los volúmenes de madera por departamento en Colombia.
     
     Args:
         df (pd.DataFrame): DataFrame con los datos de madera.
     """
-    # Cargar los datos del volumen de madera por país (usamos municipios, pero esto puede cambiar dependiendo del dataset)
-    volumen_por_pais = df.groupby('MUNICIPIO')['VOLUMEN M3'].sum().reset_index()
+    # Agrupar los volúmenes de madera por departamento
+    volumen_por_departamento = df.groupby('DPTO')['VOLUMEN M3'].sum().reset_index()
     
-    # Filtrar países de Sudamérica, puedes modificar esto si el dataset tiene un campo para país
-    paises_sudamerica = [
-        'Argentina', 'Bolivia', 'Brasil', 'Chile', 'Colombia', 'Ecuador', 'Guyana', 'Paraguay', 'Perú', 'Surinam', 'Uruguay', 'Venezuela'
+    # Crear un DataFrame para el mapa de calor
+    # Aseguramos que todos los departamentos estén listados (incluso si hay departamentos sin datos)
+    departamentos = [
+        'Amazonas', 'Antioquia', 'Arauca', 'Atlántico', 'Bolívar', 'Boyacá', 'Caldas', 'Caquetá', 
+        'Casanare', 'Cauca', 'Cesar', 'Chocó', 'Córdoba', 'Cundinamarca', 'Guaviare', 'Guainía', 
+        'Huila', 'La Guajira', 'Magdalena', 'Meta', 'Nariño', 'Norte de Santander', 'Putumayo', 
+        'Quindío', 'Risaralda', 'San Andrés y Providencia', 'Santander', 'Sucre', 'Tolima', 
+        'Valle del Cauca', 'Vaupés', 'Vichada'
     ]
     
-    # Filtrar solo los países de Sudamérica presentes en el dataset
-    volumen_por_pais_sudamerica = volumen_por_pais[volumen_por_pais['MUNICIPIO'].isin(paises_sudamerica)]
+    # Asegurar que todos los departamentos están en el DataFrame, aunque algunos pueden tener volumen = 0
+    volumen_por_departamento = volumen_por_departamento.set_index('DPTO').reindex(departamentos, fill_value=0).reset_index()
     
-    # Ordenar el DataFrame por el volumen de madera
-    volumen_por_pais_sudamerica = volumen_por_pais_sudamerica.sort_values(by='VOLUMEN M3', ascending=False)
+    # Crear una tabla de volúmenes por departamento para el gráfico
+    volumen_por_departamento = volumen_por_departamento.set_index('DPTO')
+
+    # Crear un gráfico de mapa de calor
+    plt.figure(figsize=(12, 8))
+    sns.heatmap(volumen_por_departamento.T, annot=True, fmt=",.0f", cmap="Blues", cbar=True, linewidths=0.5)
     
-    # Crear un gráfico de barras
-    plt.figure(figsize=(10, 6))
-    sns.barplot(x='MUNICIPIO', y='VOLUMEN M3', data=volumen_por_pais_sudamerica, palette='Blues_d')
-    
-    # Agregar título y etiquetas
-    plt.title('Volumen de Madera por País en Sudamérica', fontsize=16)
-    plt.xlabel('País', fontsize=12)
+    # Título y etiquetas
+    plt.title('Mapa de Calor de Volúmenes de Madera por Departamento', fontsize=16)
+    plt.xlabel('Departamento', fontsize=12)
     plt.ylabel('Volumen de Madera (m3)', fontsize=12)
-    plt.xticks(rotation=45, ha='right')
     
     # Mostrar el gráfico en Streamlit
     st.pyplot(plt)
+
 
 
 def main():
