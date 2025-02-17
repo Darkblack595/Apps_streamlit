@@ -213,6 +213,42 @@ def analizar_evolucion_temporal(df):
     
     # Mostrar el gráfico de línea
     fig = px.line(df_agrupado, x=x_axis, y='VOLUMEN M3', title=f'Evolución temporal de {especie_seleccionada} - {tipo_producto_seleccionado}')
+
+    st.plotly_chart(fig)
+
+
+def identificar_outliers(df):
+    """
+    Identifica outliers en los volúmenes de madera utilizando el rango intercuartílico (IQR).
+    
+    Args:
+        df (pd.DataFrame): DataFrame con los datos de madera.
+    """
+    st.subheader("Análisis de outliers en los volúmenes de madera")
+    
+    # Seleccionar la columna de volumen
+    volumen = df['VOLUMEN M3']
+    
+    # Calcular el rango intercuartílico (IQR)
+    Q1 = volumen.quantile(0.25)  # Primer cuartil (25%)
+    Q3 = volumen.quantile(0.75)  # Tercer cuartil (75%)
+    IQR = Q3 - Q1  # Rango intercuartílico
+    
+    # Definir los límites para identificar outliers
+    limite_inferior = Q1 - 1.5 * IQR
+    limite_superior = Q3 + 1.5 * IQR
+    
+    # Identificar outliers
+    outliers = df[(volumen < limite_inferior) | (volumen > limite_superior)]
+    
+    # Mostrar los outliers
+    st.write(f"Se encontraron {len(outliers)} outliers en los volúmenes de madera.")
+    st.write("### Datos de los outliers:")
+    st.dataframe(outliers)
+    
+    # Mostrar un gráfico de caja (boxplot) para visualizar los outliers
+    st.write("### Gráfico de caja (Boxplot) para visualizar los outliers:")
+    fig = px.box(df, y='VOLUMEN M3', title='Distribución de volúmenes de madera con outliers')
     st.plotly_chart(fig)
 
 def main():
@@ -230,7 +266,8 @@ def main():
         "Top 10 especies con mayor volumen",
         "Mapa de calor por departamento",
         "Top 10 municipios con mayor movilización",
-        "Evolución temporal por especie y tipo de producto"
+        "Evolución temporal por especie y tipo de producto",
+        "Identificar outliers en los volúmenes de madera"
     ])
     
     if opcion == "Especies más comunes":
@@ -243,6 +280,8 @@ def main():
         generar_mapa_top_10_municipios(df)
     elif opcion == "Evolución temporal por especie y tipo de producto":
         analizar_evolucion_temporal(df)
+    elif opcion == "Identificar outliers en los volúmenes de madera":
+        identificar_outliers(df)
 
 if __name__ == "__main__":
     main()
