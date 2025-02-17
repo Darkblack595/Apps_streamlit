@@ -307,7 +307,8 @@ def agrupar_por_municipio(df):
 
 def especies_menor_volumen_distribucion(df):
     """
-    Identifica las especies de madera con menor volumen movilizado y analiza su distribución geográfica.
+    Identifica las especies de madera con menor volumen movilizado y analiza su distribución geográfica
+    utilizando puntos en el mapa de Colombia.
     
     Args:
         df (pd.DataFrame): DataFrame con los datos de madera.
@@ -333,20 +334,62 @@ def especies_menor_volumen_distribucion(df):
     # Filtrar el DataFrame para la especie seleccionada
     df_filtrado = df[df['ESPECIE'] == especie_seleccionada]
     
-    # Agrupar por departamento y calcular el volumen total movilizado
-    df_agrupado_departamento = df_filtrado.groupby('DPTO')['VOLUMEN M3'].sum().reset_index()
+    # Cargar el dataset de coordenadas de los municipios
+    url_coordenadas = "https://github.com/Darkblack595/Apps_streamlit/raw/main/DIVIPOLA-_C_digos_municipios_geolocalizados_20250217.csv"
+    df_coordenadas = pd.read_csv(url_coordenadas)
+    
+    # Convertir los nombres de los municipios a minúsculas en ambos datasets
+    df_filtrado['MUNICIPIO'] = df_filtrado['MUNICIPIO'].str.lower()
+    df_coordenadas['NOM_MPIO'] = df_coordenadas['NOM_MPIO'].str.lower()
+    
+    # Agrupar los volúmenes de madera por municipio
+    vol_por_municipio = df_filtrado.groupby('MUNICIPIO')['VOLUMEN M3'].sum().reset_index()
+    
+    # Unir los datos de los municipios con las coordenadas
+    df_municipios_coordenadas = vol_por_municipio.merge(
+        df_coordenadas,
+        left_on='MUNICIPIO',
+        right_on='NOM_MPIO',
+        how='inner'
+    )
+    
+    # Crear un GeoDataFrame con los municipios y sus coordenadas
+    gdf = gpd.GeoDataFrame(
+        df_municipios_coordenadas,
+        geometry=gpd.points_from_xy(df_municipios_coordenadas['LONGITUD'], df_municipios_coordenadas['LATITUD'])
+    )
     
     # Cargar el archivo GeoJSON de Colombia
     colombia = gpd.read_file('https://raw.githubusercontent.com/Ritz38/Analisis_maderas/refs/heads/main/Colombia.geo.json')
     
-    # Unir los datos de volumen con el GeoDataFrame
-    df_geo = colombia.merge(df_agrupado_departamento, left_on='NOMBRE_DPT', right_on='DPTO', how='left')
-    
     # Crear la figura y el eje
     fig, ax = plt.subplots()
     
-    # Graficar el mapa de calor
-    df_geo.plot(column='VOLUMEN M3', cmap='YlOrRd', linewidth=0.8, edgecolor='k', legend=True, ax=ax)
+    # Graficar el mapa base de Colombia
+    colombia.plot(ax=ax, color='lightgray', linewidth=0.8, edgecolor='k')
+    
+    # Graficar los municipios con volúmenes de madera (tamaño y color según el volumen)
+    gdf.plot(
+        ax=ax,
+        column='VOLUMEN M3',  # Columna para el color
+        cmap='YlOrRd',        # Mapa de colores
+        markersize=gdf['VOLUMEN M3'] / 100,  # Tamaño de los puntos proporcional al volumen
+        legend=True,           # Mostrar leyenda
+        legend_kwds={'label': "Volumen de madera (m³)"}
+    )
+    
+    # Añadir etiquetas con el nombre del municipio
+    for idx, row in gdf.iterrows():
+        ax.text(
+            x=row['LONGITUD'],
+            y=row['LATITUD'],
+            s=row['MUNICIPIO'].title(),  # Nombre del municipio en formato título
+            fontsize=6, 
+            ha='center',
+            va='center',
+            color='black',
+            bbox=dict(facecolor='white', alpha=0.5, edgecolor='none')  # Fondo blanco para mejor legibilidad
+        )
     
     # Establecer el título
     ax.set_title(f"Distribución geográfica de {especie_seleccionada}")
