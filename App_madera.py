@@ -176,6 +176,45 @@ def generar_mapa_top_10_municipios(df):
     # Mostrar el gráfico en Streamlit
     st.pyplot(fig)
 
+def analizar_evolucion_temporal(df):
+    """
+    Analiza la evolución temporal del volumen de madera movilizada por especie y tipo de producto.
+    
+    Args:
+        df (pd.DataFrame): DataFrame con los datos de madera.
+    """
+    st.subheader("Evolución temporal del volumen de madera movilizada")
+    
+    # Seleccionar la especie
+    especies = df['ESPECIE'].unique()
+    especie_seleccionada = st.selectbox("Selecciona una especie", especies)
+    
+    # Seleccionar el tipo de producto
+    tipos_producto = df['TIPO PRODUCTO'].unique()
+    tipo_producto_seleccionado = st.selectbox("Selecciona un tipo de producto", tipos_producto)
+    
+    # Filtrar el DataFrame por la especie y tipo de producto seleccionados
+    df_filtrado = df[(df['ESPECIE'] == especie_seleccionada) & (df['TIPO PRODUCTO'] == tipo_producto_seleccionado)]
+    
+    # Agrupar por año, semestre o trimestre según la selección del usuario
+    periodo = st.radio("Selecciona el período de tiempo", ['AÑO', 'SEMESTRE', 'TRIMESTRE'])
+    
+    if periodo == 'AÑO':
+        df_agrupado = df_filtrado.groupby('AÑO')['VOLUMEN M3'].sum().reset_index()
+        x_axis = 'AÑO'
+    elif periodo == 'SEMESTRE':
+        df_agrupado = df_filtrado.groupby(['AÑO', 'SEMESTRE'])['VOLUMEN M3'].sum().reset_index()
+        df_agrupado['PERIODO'] = df_agrupado['AÑO'].astype(str) + ' - ' + df_agrupado['SEMESTRE'].astype(str)
+        x_axis = 'PERIODO'
+    elif periodo == 'TRIMESTRE':
+        df_agrupado = df_filtrado.groupby(['AÑO', 'TRIMESTRE'])['VOLUMEN M3'].sum().reset_index()
+        df_agrupado['PERIODO'] = df_agrupado['AÑO'].astype(str) + ' - ' + df_agrupado['TRIMESTRE'].astype(str)
+        x_axis = 'PERIODO'
+    
+    # Mostrar el gráfico de línea
+    fig = px.line(df_agrupado, x=x_axis, y='VOLUMEN M3', title=f'Evolución temporal de {especie_seleccionada} - {tipo_producto_seleccionado}')
+    st.plotly_chart(fig)
+
 def main():
     """
     Función principal para ejecutar la aplicación en Streamlit.
@@ -190,7 +229,8 @@ def main():
         "Especies más comunes",
         "Top 10 especies con mayor volumen",
         "Mapa de calor por departamento",
-        "Top 10 municipios con mayor movilización"
+        "Top 10 municipios con mayor movilización",
+        "Evolución temporal por especie y tipo de producto"
     ])
     
     if opcion == "Especies más comunes":
@@ -201,7 +241,8 @@ def main():
         generar_mapa_calor(df)
     elif opcion == "Top 10 municipios con mayor movilización":
         generar_mapa_top_10_municipios(df)
-    
+    elif opcion == "Evolución temporal por especie y tipo de producto":
+        analizar_evolucion_temporal(df)
 
 if __name__ == "__main__":
     main()
