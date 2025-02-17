@@ -16,30 +16,29 @@ def cargar_datos(url):
     """
     return pd.read_csv(url)
 
-def calcular_maderas_comunes(df):
+def mostrar_top_10_maderas(df):
     """
-    Calcula las especies de madera más comunes basadas en la frecuencia de aparición en el dataset
-    a nivel país y por departamento.
+    Muestra un gráfico de barras con las diez especies de madera más comunes y sus volúmenes asociados.
     
     Args:
         df (pd.DataFrame): DataFrame con los datos de madera.
-    
-    Returns:
-        dict: Diccionario con los datos agregados a nivel país y por departamento.
     """
-    # Contar la frecuencia de aparición de cada especie a nivel país
-    df_agrupado_pais = df['ESPECIE'].value_counts().reset_index()
-    df_agrupado_pais.columns = ['ESPECIE', 'FRECUENCIA']
-    df_agrupado_pais = df_agrupado_pais.sort_values(by='FRECUENCIA', ascending=False)
+    # Identificar las especies más comunes (frecuencia de aparición)
+    especies_comunes = df['ESPECIE'].value_counts().reset_index()
+    especies_comunes.columns = ['ESPECIE', 'FRECUENCIA']
+    especies_comunes = especies_comunes.sort_values(by='FRECUENCIA', ascending=False).head(10)
     
-    # Contar la frecuencia de aparición de cada especie por departamento
-    df_agrupado_departamento = df.groupby(['DPTO', 'ESPECIE']).size().reset_index(name='FRECUENCIA')
-    df_agrupado_departamento = df_agrupado_departamento.sort_values(by=['DPTO', 'FRECUENCIA'], ascending=[True, False])
+    # Filtrar el DataFrame original para obtener solo las especies más comunes
+    df_filtrado = df[df['ESPECIE'].isin(especies_comunes['ESPECIE'])]
     
-    return {
-        'pais': df_agrupado_pais,
-        'departamento': df_agrupado_departamento
-    }
+    # Calcular el volumen total por especie
+    df_top_10 = df_filtrado.groupby('ESPECIE')['VOLUMEN M3'].sum().reset_index()
+    df_top_10 = df_top_10.sort_values(by='VOLUMEN M3', ascending=False)
+    
+    st.subheader("Top 10 especies de madera más comunes y sus volúmenes asociados")
+    fig_top_10 = px.bar(df_top_10, x='ESPECIE', y='VOLUMEN M3', title='Top 10 especies más comunes y sus volúmenes')
+    st.plotly_chart(fig_top_10)
+    
 
 def mostrar_top_10_maderas(df):
     """
