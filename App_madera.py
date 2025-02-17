@@ -110,7 +110,7 @@ def generar_mapa_top_10_municipios(df):
     
     # Cargar el archivo GeoJSON de Colombia
     colombia = gpd.read_file('https://raw.githubusercontent.com/Ritz38/Analisis_maderas/refs/heads/main/Colombia.geo.json')
-    
+
     # Crear la figura y el eje
     fig, ax = plt.subplots()
     
@@ -123,7 +123,8 @@ def generar_mapa_top_10_municipios(df):
         volumen = row['VOLUMEN M3']
         
         # Filtrar el municipio en el GeoDataFrame
-        municipio_geo = colombia[colombia['NOMBRE_MPIO'] == municipio]
+        print(type(colombia))
+        municipio_geo = colombia[colombia['NOMBRE_DPT'] == municipio]
         
         # Graficar el municipio resaltado
         municipio_geo.plot(ax=ax, color='red', edgecolor='k', linewidth=0.8)
