@@ -219,7 +219,8 @@ def analizar_evolucion_temporal(df):
 
 def identificar_outliers(df):
     """
-    Identifica outliers en los volúmenes de madera utilizando el rango intercuartílico (IQR).
+    Identifica outliers en los volúmenes de madera utilizando el rango intercuartílico (IQR)
+    y muestra solo los datos de los outliers en una tabla.
     
     Args:
         df (pd.DataFrame): DataFrame con los datos de madera.
@@ -241,10 +242,15 @@ def identificar_outliers(df):
     # Identificar outliers
     outliers = df[(volumen < limite_inferior) | (volumen > limite_superior)]
     
-    # Mostrar los outliers
-    st.write(f"Se encontraron {len(outliers)} outliers en los volúmenes de madera.")
-    st.write("### Datos de los outliers:")
-    st.dataframe(outliers)
+    # Mostrar el número de outliers encontrados
+    st.write(f"Se encontraron **{len(outliers)} outliers** en los volúmenes de madera.")
+    
+    # Mostrar solo los datos de los outliers en una tabla
+    if len(outliers) > 0:
+        st.write("### Datos de los outliers:")
+        st.dataframe(outliers.reset_index(drop=True))  # Resetear el índice para mejor visualización
+    else:
+        st.write("No se encontraron outliers en los datos.")
     
     # Mostrar un gráfico de caja (boxplot) para visualizar los outliers
     st.write("### Gráfico de caja (Boxplot) para visualizar los outliers:")
