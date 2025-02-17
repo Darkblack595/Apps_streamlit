@@ -110,16 +110,20 @@ def generar_mapa_calor(df):
     # Mostrar el gráfico en Streamlit
     st.pyplot(fig)
 
-def generar_mapa_top_10_municipios(df, df_coordenadas):
+def generar_mapa_top_10_municipios(df):
     """
     Genera un mapa de Colombia con los diez municipios con mayor movilización de madera.
     
     Args:
         df (pd.DataFrame): DataFrame con los datos de madera.
-        df_coordenadas (pd.DataFrame): DataFrame con las coordenadas de los municipios.
     """
-    # Convertir los nombres de los municipios a minúsculas en el dataset original
+    # Cargar el dataset de coordenadas de los municipios
+    url_coordenadas = "https://github.com/Darkblack595/Apps_streamlit/raw/main/DIVIPOLA-_C_digos_municipios_geolocalizados_20250217.csv"
+    df_coordenadas = pd.read_csv(url_coordenadas)
+    
+    # Convertir los nombres de los municipios a minúsculas en ambos datasets
     df['MUNICIPIO'] = df['MUNICIPIO'].str.lower()
+    df_coordenadas['NOM_MPIO'] = df_coordenadas['NOM_MPIO'].str.lower()
     
     # Agrupar los volúmenes de madera por municipio
     vol_por_municipio = df.groupby('MUNICIPIO')['VOLUMEN M3'].sum().reset_index()
@@ -131,7 +135,7 @@ def generar_mapa_top_10_municipios(df, df_coordenadas):
     top_10_municipios = top_10_municipios.merge(
         df_coordenadas,
         left_on='MUNICIPIO',
-        right_on='NOMBRE_MUNICIPIO',
+        right_on='NOM_MPIO',
         how='inner'
     )
     
@@ -197,10 +201,7 @@ def main():
     elif opcion == "Mapa de calor por departamento":
         generar_mapa_calor(df)
     elif opcion == "Top 10 municipios con mayor movilización":
-        url = pd.read_csv('https://raw.githubuser\
-        content.com/Darkblack595/Apps_streamlit/refs/heads/main/DIVIPOLA\
-        -_C_digos_municipios_geolocalizados_20250217.csv')
-        df_coordenadas = cargar_coordenadas_municipios(url)
+        generar_mapa_top_10_municipios(df)
     
 
 if __name__ == "__main__":
