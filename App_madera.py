@@ -79,9 +79,21 @@ def generar_mapa_calor(df):
     """
     df_departamento = df.groupby('DPTO')['VOLUMEN M3'].sum().reset_index()
     
+    # Limpiar los nombres de los departamentos para que coincidan con los del GeoJSON
+    df_departamento['DPTO'] = df_departamento['DPTO'].str.strip()  # Eliminar espacios extra
+    df_departamento['DPTO'] = df_departamento['DPTO'].str.title()  # Asegurarse de que estén con mayúsculas y minúsculas apropiadas
+    
     # Cargar el GeoJSON de Colombia con los departamentos
     url_geojson = "https://raw.githubusercontent.com/ferregox/colombia_geojson/master/colombia.geojson"
     geojson = requests.get(url_geojson).json()
+    
+    # Obtener la lista de departamentos desde el GeoJSON para verificar coincidencia
+    departamentos_geojson = [feature['properties']['NOMBRE_DPT'] for feature in geojson['features']]
+    
+    # Verificar si todos los departamentos del DataFrame están en el GeoJSON
+    departamentos_no_encontrados = df_departamento[~df_departamento['DPTO'].isin(departamentos_geojson)]
+    if not departamentos_no_encontrados.empty:
+        st.warning(f"Los siguientes departamentos no se encontraron en el archivo GeoJSON: {', '.join(departamentos_no_encontrados['DPTO'])}")
     
     st.subheader("Mapa de calor de volúmenes de madera por departamento")
     fig_mapa = px.choropleth(df_departamento, 
@@ -93,6 +105,7 @@ def generar_mapa_calor(df):
                              color_continuous_scale="Blues")
     fig_mapa.update_geos(fitbounds="locations", visible=False)
     st.plotly_chart(fig_mapa)
+
 
 def main():
     """
