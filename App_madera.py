@@ -72,19 +72,32 @@ def mostrar_visualizaciones(datos):
     fig_departamento = px.bar(df_filtrado, x='ESPECIE', y='VOLUMEN M3', title=f'Volumen por especie en {departamento_seleccionado}')
     st.plotly_chart(fig_departamento)
 
+import streamlit as st
+import pandas as pd
+import geopandas as gpd
+import matplotlib.pyplot as plt
+
 def generar_mapa_calor(df):
     """Genera un mapa de calor de volúmenes de madera por departamento."""
+    # Cargar el archivo GeoJSON de Colombia
     colombia = gpd.read_file('https://raw.githubusercontent.com/Ritz38/Analisis_maderas/refs/heads/main/Colombia.geo.json')
+    
+    # Crear la figura y el eje
     fig, ax = plt.subplots()
     
+    # Agrupar los volúmenes de madera por departamento
     vol_por_dpto = df.groupby('DPTO')['VOLUMEN M3'].sum().reset_index()
+    
+    # Unir los datos de volumen con el GeoDataFrame
     df_geo = colombia.merge(vol_por_dpto, left_on='NOMBRE_DPT', right_on='DPTO')
     
-    df_geo.plot(column='VOLUMEN M3', cmap='OrRd', linewidth=0.8, edgecolor='k', legend=True, ax=ax)
+    # Graficar el mapa de calor con el nuevo colormap
+    df_geo.plot(column='VOLUMEN M3', cmap='YlGnBu', linewidth=0.8, edgecolor='k', legend=True, ax=ax)
     
     # Establecer el título
     ax.set_title("Distribución de volúmenes de madera por departamento")
-    ax.set_title("Distribución de volúmenes de madera por departamento")
+    
+    # Mostrar el gráfico en Streamlit
     st.pyplot(fig)
 
 def main():
